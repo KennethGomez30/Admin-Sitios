@@ -22,7 +22,7 @@ namespace Sistema_Contable.Pages
         [TempData]
         public string? MensajeError { get; set; }
 
-        // Quitar [TempData] de MensajeInfo - solo usar propiedad normal
+        // Solo usar propiedad normal
         public string? MensajeInfo { get; set; }
 
         public void OnGet()

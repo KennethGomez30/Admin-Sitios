@@ -6,4 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Sistema_Contable.Entities\Sistema_Contable.Entities.csproj" />
+    <ProjectReference Include="..\Sistema_Contable.Services\Sistema_Contable.Services.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="../Sistema_Contable.Entities/Sistema_Contable.Entities.csproj" Id="4613744d-feb6-4064-adb7-2edcd16cd9a9" />
+  <Project Path="../Sistema_Contable.Repository/Sistema_Contable.Repository.csproj" Id="d8d809c7-16eb-44c2-b6d7-7652df012896" />
+  <Project Path="../Sistema_Contable.Services/Sistema_Contable.Services.csproj" Id="da653d80-b568-48cd-84b8-974e935a3e4b" />
   <Project Path="Sistema_Contable.csproj" />
 </Solution>

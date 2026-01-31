@@ -5,16 +5,13 @@ namespace Sistema_Contable.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly ILogger<IndexModel> _logger;
-
-        public IndexModel(ILogger<IndexModel> logger)
-        {
-            _logger = logger;
-        }
+        public string? UsuarioNombre { get; set; }
 
         public void OnGet()
         {
-
+            // El filtro AutenticacionFilter ya validó que hay sesión
+            // Obtener nombre del usuario
+            UsuarioNombre = HttpContext.Session.GetString("UsuarioNombre");
         }
     }
 }

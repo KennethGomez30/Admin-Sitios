@@ -1,22 +1,46 @@
+﻿using Sistema_Contable.Repository;
+using Sistema_Contable.Services;
+using Sistema_Contable.Filters;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    // Registrar filtro de autenticación globalmente
+    options.Conventions.ConfigureFilter(new AutenticacionFilter());
+});
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+// Registrar repositorios y servicios
+builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(connectionString));
+builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
+builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
+
+// Configurar sesión - ADM4: 5 minutos de timeout
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(5);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
+app.UseExceptionHandler("/Error");
+app.UseHsts();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Habilitar sesión
+app.UseSession();
 
 app.UseAuthorization();
 

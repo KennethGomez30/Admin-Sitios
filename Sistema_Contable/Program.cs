@@ -1,22 +1,26 @@
-﻿using Sistema_Contable.Repository;
-using Sistema_Contable.Services;
+﻿using Microsoft.AspNetCore.DataProtection.Repositories;
 using Sistema_Contable.Filters;
+using Sistema_Contable.Repository;
+using Sistema_Contable.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages(options =>
 {
-    // Registrar filtro de autenticación globalmente
+    // Registrar el filtro de autenticación globalmente
     options.Conventions.ConfigureFilter(new AutenticacionFilter());
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    ?? throw new InvalidOperationException("No se encontro la cadena de conexion 'DefaultConnection'.");
 
-// Registrar repositorios y servicios
+// Registrar repositorios
 builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(connectionString));
 builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
+builder.Services.AddScoped<IRolRepository>(sp => new RolRepository(connectionString));
+
+// Registrar servicios
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
 
 // Configurar sesión - ADM4: 5 minutos de timeout
@@ -30,7 +34,6 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler("/Error");
 app.UseHsts();
 
@@ -39,7 +42,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Habilitar sesión
+// Habilitar sesión ANTES de la autorización
 app.UseSession();
 
 app.UseAuthorization();

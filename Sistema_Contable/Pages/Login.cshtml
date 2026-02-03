@@ -10,15 +10,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - Sistema Contable</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Bootstrap 4 (mismo que SB Admin 2) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+    <!-- Fuente Nunito (igual que el sistema) -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" />
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
 
         .login-box {
@@ -30,7 +39,7 @@
         }
 
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             color: white;
             padding: 40px;
             text-align: center;
@@ -47,74 +56,88 @@
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
 
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
             border: none;
             padding: 12px;
             font-weight: 600;
             transition: all 0.3s;
+            color: white;
         }
 
             .btn-login:hover {
+                background: linear-gradient(135deg, #2e59d9 0%, #1a3a9e 100%);
                 transform: translateY(-2px);
-                box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 5px 20px rgba(78, 115, 223, 0.4);
+                color: white;
             }
+
+        .company-name {
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
     </style>
 </head>
 <body>
     <div class="login-box">
         <div class="login-header">
             <div class="login-logo">
-                <i class="bi bi-calculator-fill"></i>
+                <i class="fas fa-calculator"></i>
             </div>
             <h2 class="mb-0">Sistema Contable</h2>
-            <p class="mb-0 mt-2">Desarrollos Ordenados S.A.</p>
+            <p class="mb-0 mt-2 company-name">Desarrollos Ordenados S.A.</p>
         </div>
         <div class="login-body">
             @if (!string.IsNullOrEmpty(Model.MensajeError))
             {
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
                     @Model.MensajeError
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
                 </div>
             }
 
             @if (!string.IsNullOrEmpty(Model.MensajeInfo))
             {
                 <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <i class="fas fa-info-circle mr-2"></i>
                     @Model.MensajeInfo
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
                 </div>
             }
 
             <form method="post">
-                <div class="mb-3">
-                    <label for="Identificacion" class="form-label">
-                        <i class="bi bi-person-fill me-1"></i> Usuario
+                <div class="form-group">
+                    <label for="Identificacion" class="font-weight-bold text-gray-700">
+                        <i class="fas fa-user mr-1"></i> Usuario
                     </label>
                     <input asp-for="Identificacion" class="form-control form-control-lg" placeholder="Ingrese su usuario" />
                 </div>
 
-                <div class="mb-4">
-                    <label for="Contrasena" class="form-label">
-                        <i class="bi bi-lock-fill me-1"></i> Contraseña
+                <div class="form-group mb-4">
+                    <label for="Contrasena" class="font-weight-bold text-gray-700">
+                        <i class="fas fa-lock mr-1"></i> Contraseña
                     </label>
                     <input asp-for="Contrasena" type="password" class="form-control form-control-lg" placeholder="Ingrese su contraseña" />
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-login btn-lg w-100">
-                    <i class="bi bi-box-arrow-in-right me-2"></i> Ingresar
+                <button type="submit" class="btn btn-login btn-lg btn-block">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Ingresar
                 </button>
             </form>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts Bootstrap 4 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,0 +1,152 @@
+﻿@page "{id}"
+@model Sistema_Contable.Pages.Usuarios.EditarModel
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-user-edit text-primary"></i> Editar Usuario
+    </h1>
+    <a asp-page="./Index" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver al Listado
+    </a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.MensajeError))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @Model.MensajeError
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Información del Usuario</h6>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                            Identificación / Nombre de Usuario
+                        </label>
+                        <input type="text" class="form-control" value="@Model.Usuario.Identificacion" disabled />
+                        <small class="form-text text-muted">La identificación no se puede modificar</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Usuario.Correo" class="font-weight-bold">
+                            Correo Electrónico <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Usuario.Correo" type="email" class="form-control" maxlength="100" required />
+                        <span asp-validation-for="Usuario.Correo" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Usuario.Nombre" class="font-weight-bold">
+                            Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Usuario.Nombre" class="form-control" maxlength="50"
+                               pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                               title="Solo se permiten letras y espacios" required />
+                        <span asp-validation-for="Usuario.Nombre" class="text-danger small"></span>
+                        <small class="form-text text-muted">Solo letras y espacios, máximo 50 caracteres</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Usuario.Apellido" class="font-weight-bold">
+                            Apellido <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Usuario.Apellido" class="form-control" maxlength="50"
+                               pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                               title="Solo se permiten letras y espacios" required />
+                        <span asp-validation-for="Usuario.Apellido" class="text-danger small"></span>
+                        <small class="form-text text-muted">Solo letras y espacios, máximo 50 caracteres</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Usuario.Estado" class="font-weight-bold">
+                            Estado <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Usuario.Estado" class="form-control" required>
+                            <option value="Activo">Activo</option>
+                            <option value="Inactivo">Inactivo</option>
+                            <option value="Bloqueado">Bloqueado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-light border mb-0">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        <strong>Intentos de login:</strong> @Model.UsuarioOriginal?.IntentosLogin
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                            Roles Asociados <span class="text-danger">*</span>
+                        </label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            @if (Model.RolesDisponibles != null && Model.RolesDisponibles.Any())
+                            {
+                                @foreach (var rol in Model.RolesDisponibles)
+                                {
+                                    var isChecked = Model.RolesSeleccionados.Contains(rol.IdRol);
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="rol_@rol.IdRol" name="RolesSeleccionados" value="@rol.IdRol"
+                                               @(isChecked ? "checked" : "") />
+                                        <label class="custom-control-label" for="rol_@rol.IdRol">
+                                            @rol.Nombre
+                                        </label>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-0">No hay roles disponibles</p>
+                            }
+                        </div>
+                        <small class="form-text text-muted">Seleccione al menos un rol para el usuario</small>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="form-group text-right">
+                <a asp-page="./Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Actualizar Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

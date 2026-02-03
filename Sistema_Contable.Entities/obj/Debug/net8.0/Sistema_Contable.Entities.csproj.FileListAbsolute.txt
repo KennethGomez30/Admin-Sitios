@@ -10,3 +10,15 @@ C:\Proyecto-Sitios\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Siste
 C:\Proyecto-Sitios\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\refint\Sistema_Contable.Entities.dll
 C:\Proyecto-Sitios\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.pdb
 C:\Proyecto-Sitios\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\ref\Sistema_Contable.Entities.dll
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\bin\Debug\net8.0\Sistema_Contable.Entities.deps.json
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\bin\Debug\net8.0\Sistema_Contable.Entities.dll
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\bin\Debug\net8.0\Sistema_Contable.Entities.pdb
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.AssemblyInfoInputs.cache
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.AssemblyInfo.cs
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.csproj.CoreCompileInputs.cache
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.sourcelink.json
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.dll
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\refint\Sistema_Contable.Entities.dll
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\Sistema_Contable.Entities.pdb
+C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Entities\obj\Debug\net8.0\ref\Sistema_Contable.Entities.dll

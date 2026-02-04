@@ -12,13 +12,13 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.ConfigureFilter(new AutenticacionFilter());
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("No se encontro la cadena de conexion 'DefaultConnection'.");
+// Registrar DbConnectionFactory como Singleton
+builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
-// Registrar repositorios
-builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(connectionString));
-builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
-builder.Services.AddScoped<IRolRepository>(sp => new RolRepository(connectionString));
+// Registrar repositorios usando inyección de dependencias
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IBitacoraRepository, BitacoraRepository>();
+builder.Services.AddScoped<IRolRepository, RolRepository>();
 
 // Registrar servicios
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();

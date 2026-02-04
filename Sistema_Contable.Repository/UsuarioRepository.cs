@@ -3,6 +3,7 @@ using MySql.Data.MySqlClient;
 using Sistema_Contable.Entities;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,63 +12,53 @@ namespace Sistema_Contable.Repository
 {
     public class UsuarioRepository : IUsuarioRepository
     {
-        private readonly string _connectionString;
+        private readonly IDbConnectionFactory _dbConnectionFactory;
 
-        public UsuarioRepository(string connectionString)
+        public UsuarioRepository(IDbConnectionFactory dbConnectionFactory)
         {
-            _connectionString = connectionString;
+            _dbConnectionFactory = dbConnectionFactory;
         }
 
         public async Task<Usuario?> ObtenerPorIdentificacionAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = @"SELECT Identificacion, Nombre, Apellido, Correo, Contrasena, 
-                                 Estado, IntentosLogin, FechaCreacion, FechaModificacion 
-                          FROM Usuarios 
-                          WHERE Identificacion = @Identificacion";
-
-            return await connection.QueryFirstOrDefaultAsync<Usuario>(query, new { Identificacion = identificacion });
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.QueryFirstOrDefaultAsync<Usuario>(
+                "sp_ObtenerUsuarioPorIdentificacion",
+                new { p_Identificacion = identificacion },
+                commandType: CommandType.StoredProcedure
+            );
         }
 
         public async Task ActualizarIntentosLoginAsync(string identificacion, int intentos)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = @"UPDATE Usuarios 
-                          SET IntentosLogin = @Intentos, FechaModificacion = NOW()
-                          WHERE Identificacion = @Identificacion";
-
-            await connection.ExecuteAsync(query, new { Identificacion = identificacion, Intentos = intentos });
+            using var connection = _dbConnectionFactory.CreateConnection();
+            await connection.ExecuteAsync(
+                "sp_ActualizarIntentosLogin",
+                new { p_Identificacion = identificacion, p_Intentos = intentos },
+                commandType: CommandType.StoredProcedure
+            );
         }
 
         public async Task BloquearUsuarioAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = @"UPDATE Usuarios 
-                          SET Estado = 'Bloqueado', IntentosLogin = 3, FechaModificacion = NOW()
-                          WHERE Identificacion = @Identificacion";
-
-            await connection.ExecuteAsync(query, new { Identificacion = identificacion });
+            using var connection = _dbConnectionFactory.CreateConnection();
+            await connection.ExecuteAsync(
+                "sp_BloquearUsuario",
+                new { p_Identificacion = identificacion },
+                commandType: CommandType.StoredProcedure
+            );
         }
 
-        // ADM7
         public async Task<List<UsuarioConRoles>> ObtenerTodosPaginadoAsync(int pagina, int porPagina)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            using var connection = _dbConnectionFactory.CreateConnection();
 
             var offset = (pagina - 1) * porPagina;
-
-            var query = @"SELECT u.Identificacion, u.Nombre, u.Apellido, u.Correo, u.Estado, u.IntentosLogin,
-                                 r.IdRol, r.Nombre
-                          FROM Usuarios u
-                          LEFT JOIN UsuarioRoles ur ON u.Identificacion = ur.UsuarioIdentificacion
-                          LEFT JOIN Roles r ON ur.RolId = r.IdRol
-                          ORDER BY u.Identificacion
-                          LIMIT @Limit OFFSET @Offset";
 
             var usuariosDic = new Dictionary<string, UsuarioConRoles>();
 
             await connection.QueryAsync<UsuarioConRoles, Rol, UsuarioConRoles>(
-                query,
+                "sp_ObtenerUsuariosPaginados",
                 (usuario, rol) =>
                 {
                     if (!usuariosDic.TryGetValue(usuario.Identificacion, out var usuarioActual))
@@ -84,8 +75,9 @@ namespace Sistema_Contable.Repository
 
                     return usuarioActual;
                 },
-                new { Limit = porPagina, Offset = offset },
-                splitOn: "IdRol"
+                new { p_Limit = porPagina, p_Offset = offset },
+                splitOn: "IdRol",
+                commandType: CommandType.StoredProcedure
             );
 
             return usuariosDic.Values.ToList();
@@ -93,26 +85,21 @@ namespace Sistema_Contable.Repository
 
         public async Task<int> ContarTotalAsync()
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = "SELECT COUNT(*) FROM Usuarios";
-            return await connection.ExecuteScalarAsync<int>(query);
+            using var connection = _dbConnectionFactory.CreateConnection();
+            return await connection.ExecuteScalarAsync<int>(
+                "sp_ContarTotalUsuarios",
+                commandType: CommandType.StoredProcedure
+            );
         }
 
         public async Task<UsuarioConRoles?> ObtenerConRolesPorIdAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
-
-            var query = @"SELECT u.Identificacion, u.Nombre, u.Apellido, u.Correo, u.Estado, u.IntentosLogin,
-                                 r.IdRol, r.Nombre
-                          FROM Usuarios u
-                          LEFT JOIN UsuarioRoles ur ON u.Identificacion = ur.UsuarioIdentificacion
-                          LEFT JOIN Roles r ON ur.RolId = r.IdRol
-                          WHERE u.Identificacion = @Identificacion";
+            using var connection = _dbConnectionFactory.CreateConnection();
 
             UsuarioConRoles? usuario = null;
 
             await connection.QueryAsync<UsuarioConRoles, Rol, UsuarioConRoles>(
-                query,
+                "sp_ObtenerUsuarioConRolesPorId",
                 (u, rol) =>
                 {
                     if (usuario == null)
@@ -128,8 +115,9 @@ namespace Sistema_Contable.Repository
 
                     return usuario;
                 },
-                new { Identificacion = identificacion },
-                splitOn: "IdRol"
+                new { p_Identificacion = identificacion },
+                splitOn: "IdRol",
+                commandType: CommandType.StoredProcedure
             );
 
             return usuario;
@@ -137,37 +125,53 @@ namespace Sistema_Contable.Repository
 
         public async Task<bool> ExisteAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = "SELECT COUNT(*) FROM Usuarios WHERE Identificacion = @Identificacion";
-            var count = await connection.ExecuteScalarAsync<int>(query, new { Identificacion = identificacion });
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var count = await connection.ExecuteScalarAsync<int>(
+                "sp_ExisteUsuario",
+                new { p_Identificacion = identificacion },
+                commandType: CommandType.StoredProcedure
+            );
             return count > 0;
         }
 
         public async Task CrearAsync(Usuario usuario, List<int> rolesIds)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            using var connection = _dbConnectionFactory.CreateConnection();
             await connection.OpenAsync();
             using var transaction = await connection.BeginTransactionAsync();
 
             try
             {
-                // Insertar usuario
-                var queryUsuario = @"INSERT INTO Usuarios (Identificacion, Nombre, Apellido, Correo, Contrasena, Estado, IntentosLogin)
-                                     VALUES (@Identificacion, @Nombre, @Apellido, @Correo, @Contrasena, @Estado, @IntentosLogin)";
+                await connection.ExecuteAsync(
+                    "sp_CrearUsuario",
+                    new
+                    {
+                        p_Identificacion = usuario.Identificacion,
+                        p_Nombre = usuario.Nombre,
+                        p_Apellido = usuario.Apellido,
+                        p_Correo = usuario.Correo,
+                        p_Contrasena = usuario.Contrasena,
+                        p_Estado = usuario.Estado,
+                        p_IntentosLogin = usuario.IntentosLogin
+                    },
+                    transaction,
+                    commandType: CommandType.StoredProcedure
+                );
 
-                await connection.ExecuteAsync(queryUsuario, usuario, transaction);
-
-                // Insertar roles
                 if (rolesIds != null && rolesIds.Count > 0)
                 {
-                    var queryRoles = @"INSERT INTO UsuarioRoles (UsuarioIdentificacion, RolId)
-                                       VALUES (@UsuarioIdentificacion, @RolId)";
-
                     foreach (var rolId in rolesIds)
                     {
-                        await connection.ExecuteAsync(queryRoles,
-                            new { UsuarioIdentificacion = usuario.Identificacion, RolId = rolId },
-                            transaction);
+                        await connection.ExecuteAsync(
+                            "sp_InsertarUsuarioRol",
+                            new
+                            {
+                                p_UsuarioIdentificacion = usuario.Identificacion,
+                                p_RolId = rolId
+                            },
+                            transaction,
+                            commandType: CommandType.StoredProcedure
+                        );
                     }
                 }
 
@@ -182,38 +186,47 @@ namespace Sistema_Contable.Repository
 
         public async Task ActualizarAsync(Usuario usuario, List<int> rolesIds)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            using var connection = _dbConnectionFactory.CreateConnection();
             await connection.OpenAsync();
             using var transaction = await connection.BeginTransactionAsync();
 
             try
             {
-                // Actualizar usuario
-                var queryUsuario = @"UPDATE Usuarios 
-                                     SET Nombre = @Nombre, 
-                                         Apellido = @Apellido, 
-                                         Correo = @Correo, 
-                                         Estado = @Estado,
-                                         FechaModificacion = NOW()
-                                     WHERE Identificacion = @Identificacion";
+                await connection.ExecuteAsync(
+                    "sp_ActualizarUsuario",
+                    new
+                    {
+                        p_Identificacion = usuario.Identificacion,
+                        p_Nombre = usuario.Nombre,
+                        p_Apellido = usuario.Apellido,
+                        p_Correo = usuario.Correo,
+                        p_Estado = usuario.Estado
+                    },
+                    transaction,
+                    commandType: CommandType.StoredProcedure
+                );
 
-                await connection.ExecuteAsync(queryUsuario, usuario, transaction);
+                await connection.ExecuteAsync(
+                    "sp_EliminarRolesUsuario",
+                    new { p_Identificacion = usuario.Identificacion },
+                    transaction,
+                    commandType: CommandType.StoredProcedure
+                );
 
-                // Eliminar roles antiguos
-                var queryEliminarRoles = "DELETE FROM UsuarioRoles WHERE UsuarioIdentificacion = @Identificacion";
-                await connection.ExecuteAsync(queryEliminarRoles, new { usuario.Identificacion }, transaction);
-
-                // Insertar nuevos roles
                 if (rolesIds != null && rolesIds.Count > 0)
                 {
-                    var queryRoles = @"INSERT INTO UsuarioRoles (UsuarioIdentificacion, RolId)
-                                       VALUES (@UsuarioIdentificacion, @RolId)";
-
                     foreach (var rolId in rolesIds)
                     {
-                        await connection.ExecuteAsync(queryRoles,
-                            new { UsuarioIdentificacion = usuario.Identificacion, RolId = rolId },
-                            transaction);
+                        await connection.ExecuteAsync(
+                            "sp_InsertarUsuarioRol",
+                            new
+                            {
+                                p_UsuarioIdentificacion = usuario.Identificacion,
+                                p_RolId = rolId
+                            },
+                            transaction,
+                            commandType: CommandType.StoredProcedure
+                        );
                     }
                 }
 
@@ -228,56 +241,61 @@ namespace Sistema_Contable.Repository
 
         public async Task<bool> TieneRelacionesAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            using var connection = _dbConnectionFactory.CreateConnection();
 
-            // Obtener dinamicamente todas las tablas que tienen FK hacia Usuarios
-            var query = @"
-                SELECT 
-                    TABLE_NAME,
-                    COLUMN_NAME
-                FROM 
-                    INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            // Verificar tablas con Foreign Key formal hacia Usuarios
+            var queryFK = @"
+                SELECT TABLE_NAME, COLUMN_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                 WHERE 
                     REFERENCED_TABLE_SCHEMA = DATABASE()
                     AND REFERENCED_TABLE_NAME = 'Usuarios'
+                    AND CONSTRAINT_NAME != 'PRIMARY'
                     AND TABLE_NAME != 'UsuarioRoles'";
 
-            var relaciones = await connection.QueryAsync<(string TABLE_NAME, string COLUMN_NAME)>(query);
+            var tablasConFK = await connection.QueryAsync<(string TABLE_NAME, string COLUMN_NAME)>(queryFK);
 
-            // Verificar cada tabla que referencia a Usuarios
-            foreach (var (tabla, columna) in relaciones)
+            foreach (var (tabla, columna) in tablasConFK)
             {
-                var queryCount = $"SELECT COUNT(*) FROM {tabla} WHERE {columna} = @Identificacion";
-                var count = await connection.ExecuteScalarAsync<int>(queryCount, new { Identificacion = identificacion });
+                var queryExiste = $"SELECT EXISTS(SELECT 1 FROM `{tabla}` WHERE `{columna}` = @Identificacion LIMIT 1)";
+                var existe = await connection.ExecuteScalarAsync<bool>(
+                    queryExiste,
+                    new { Identificacion = identificacion }
+                );
 
-                if (count > 0)
-                {
+                if (existe)
                     return true;
-                }
             }
 
-            return false;
+            // Verificar Bitacora (sin FK formal)
+            var existeBitacora = await connection.ExecuteScalarAsync<bool>(
+                "sp_ExisteEnBitacora",
+                new { p_Identificacion = identificacion },
+                commandType: CommandType.StoredProcedure
+            );
+
+            return existeBitacora;
         }
 
         public async Task<bool> EliminarAsync(string identificacion)
         {
-            using var connection = new MySqlConnection(_connectionString);
-
-            // Primero eliminar relaciones (CASCADE se encarga de UsuarioRoles)
-            var query = "DELETE FROM Usuarios WHERE Identificacion = @Identificacion";
-            var rowsAffected = await connection.ExecuteAsync(query, new { Identificacion = identificacion });
-
+            using var connection = _dbConnectionFactory.CreateConnection();
+            var rowsAffected = await connection.ExecuteAsync(
+                "sp_EliminarUsuario",
+                new { p_Identificacion = identificacion },
+                commandType: CommandType.StoredProcedure
+            );
             return rowsAffected > 0;
         }
 
         public async Task ActualizarContrasenaAsync(string identificacion, string nuevaContrasena)
         {
-            using var connection = new MySqlConnection(_connectionString);
-            var query = @"UPDATE Usuarios 
-                          SET Contrasena = @Contrasena, FechaModificacion = NOW()
-                          WHERE Identificacion = @Identificacion";
-
-            await connection.ExecuteAsync(query, new { Identificacion = identificacion, Contrasena = nuevaContrasena });
+            using var connection = _dbConnectionFactory.CreateConnection();
+            await connection.ExecuteAsync(
+                "sp_ActualizarContrasena",
+                new { p_Identificacion = identificacion, p_Contrasena = nuevaContrasena },
+                commandType: CommandType.StoredProcedure
+            );
         }
     }
 }

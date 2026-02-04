@@ -36,7 +36,7 @@ namespace Sistema_Contable.Pages.Usuarios
         public List<Rol> RolesDisponibles { get; set; } = new();
         public UsuarioConRoles? UsuarioOriginal { get; set; }
 
-        [TempData]
+        // Variable local para mensajes (NO persiste)
         public string? MensajeError { get; set; }
 
         public class UsuarioInput

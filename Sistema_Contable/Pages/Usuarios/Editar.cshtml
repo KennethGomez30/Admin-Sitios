@@ -13,44 +13,17 @@
     </a>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.MensajeError))
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> @Model.MensajeError
-        <button type="button" class="close" data-dismiss="alert">
-            <span>&times;</span>
-        </button>
-    </div>
-}
-
 <div class="card shadow mb-4">
     <div class="card-header py-3">
         <h6 class="m-0 font-weight-bold text-primary">Información del Usuario</h6>
     </div>
     <div class="card-body">
+        <div class="alert alert-light border mb-3">
+            <i class="fas fa-info-circle text-primary"></i>
+            <strong>Identificación:</strong> @Model.Usuario.Identificacion
+        </div>
+
         <form method="post">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="font-weight-bold">
-                            Identificación / Nombre de Usuario
-                        </label>
-                        <input type="text" class="form-control" value="@Model.Usuario.Identificacion" disabled />
-                        <small class="form-text text-muted">La identificación no se puede modificar</small>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="Usuario.Correo" class="font-weight-bold">
-                            Correo Electrónico <span class="text-danger">*</span>
-                        </label>
-                        <input asp-for="Usuario.Correo" type="email" class="form-control" maxlength="100" required />
-                        <span asp-validation-for="Usuario.Correo" class="text-danger small"></span>
-                    </div>
-                </div>
-            </div>
-
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -82,6 +55,16 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
+                        <label asp-for="Usuario.Correo" class="font-weight-bold">
+                            Correo Electrónico <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Usuario.Correo" type="email" class="form-control" maxlength="100" required />
+                        <span asp-validation-for="Usuario.Correo" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
                         <label asp-for="Usuario.Estado" class="font-weight-bold">
                             Estado <span class="text-danger">*</span>
                         </label>
@@ -90,13 +73,6 @@
                             <option value="Inactivo">Inactivo</option>
                             <option value="Bloqueado">Bloqueado</option>
                         </select>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="alert alert-light border mb-0">
-                        <i class="fas fa-info-circle text-primary"></i>
-                        <strong>Intentos de login:</strong> @Model.UsuarioOriginal?.IntentosLogin
                     </div>
                 </div>
             </div>
@@ -112,11 +88,10 @@
                             {
                                 @foreach (var rol in Model.RolesDisponibles)
                                 {
-                                    var isChecked = Model.RolesSeleccionados.Contains(rol.IdRol);
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input"
                                                id="rol_@rol.IdRol" name="RolesSeleccionados" value="@rol.IdRol"
-                                               @(isChecked ? "checked" : "") />
+                                               @(Model.RolesSeleccionados.Contains(rol.IdRol) ? "checked" : "") />
                                         <label class="custom-control-label" for="rol_@rol.IdRol">
                                             @rol.Nombre
                                         </label>
@@ -140,7 +115,7 @@
                     <i class="fas fa-times"></i> Cancelar
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Actualizar Usuario
+                    <i class="fas fa-save"></i> Guardar Cambios
                 </button>
             </div>
         </form>
@@ -148,5 +123,41 @@
 </div>
 
 @section Scripts {
+    <script>
+        $(document).ready(function () {
+            @if (!string.IsNullOrEmpty(Model.MensajeError))
+            {
+                    <text>
+                    var modalHtml = `
+                        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-exclamation-triangle"></i> Error
+                                        </h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal">
+                                            <span>&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @Model.MensajeError
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Aceptar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('body').append(modalHtml);
+                    $('#modalMensaje').modal('show');
+                    $('#modalMensaje').on('hidden.bs.modal', function () {
+                        $(this).remove();
+                    });
+                    </text>
+            }
+        });
+    </script>
     <partial name="_ValidationScriptsPartial" />
 }

@@ -25,14 +25,20 @@ namespace Sistema_Contable.Pages.Usuarios
         public int PaginaActual { get; set; } = 1;
         public int TotalPaginas { get; set; }
 
-        [TempData]
+        // Variables locales para mensajes (NO persisten)
         public string? MensajeExito { get; set; }
-
-        [TempData]
         public string? MensajeError { get; set; }
 
         public async Task OnGetAsync(int pagina = 1)
         {
+            // Leer y ELIMINAR TempData inmediatamente
+            MensajeExito = TempData["MensajeExito"] as string;
+            MensajeError = TempData["MensajeError"] as string;
+
+            // Limpiar TempData explícitamente para que NO persista
+            TempData.Remove("MensajeExito");
+            TempData.Remove("MensajeError");
+
             PaginaActual = pagina > 0 ? pagina : 1;
 
             // Obtener usuarios paginados
@@ -56,7 +62,7 @@ namespace Sistema_Contable.Pages.Usuarios
                 // Verificar si tiene relaciones
                 if (await _usuarioRepository.TieneRelacionesAsync(identificacionEliminar))
                 {
-                    MensajeError = "No se puede eliminar un registro con datos relacionados.";
+                    TempData["MensajeError"] = "No se puede eliminar un registro con datos relacionados.";
                     return RedirectToPage();
                 }
 
@@ -81,17 +87,17 @@ namespace Sistema_Contable.Pages.Usuarios
 
                     await RegistrarBitacoraAsync(usuarioActual, $"Elimina usuario | Datos eliminados: {jsonEliminado}");
 
-                    MensajeExito = "Usuario eliminado exitosamente.";
+                    TempData["MensajeExito"] = "Usuario eliminado exitosamente.";
                 }
                 else
                 {
-                    MensajeError = "No se pudo eliminar el usuario.";
+                    TempData["MensajeError"] = "No se pudo eliminar el usuario.";
                 }
             }
             catch (Exception ex)
             {
                 await RegistrarBitacoraAsync(usuarioActual, $"Error al eliminar usuario: {ex.Message}");
-                MensajeError = "Ocurrió un error al eliminar el usuario.";
+                TempData["MensajeError"] = "Ocurrió un error al eliminar el usuario.";
             }
 
             return RedirectToPage();

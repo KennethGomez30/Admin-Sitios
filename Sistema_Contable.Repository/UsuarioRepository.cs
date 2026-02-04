@@ -300,7 +300,7 @@ namespace Sistema_Contable.Repository
 
         public async Task<bool> TieneAccesoRutaAsync(string usuarioId, string ruta)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            using var connection = _dbConnectionFactory.CreateConnection();
 
             var sql = @"
         SELECT 1

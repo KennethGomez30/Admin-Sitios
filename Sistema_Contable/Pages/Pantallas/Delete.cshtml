@@ -1,0 +1,57 @@
+﻿@page
+@model Sistema_Contable.Pages.Pantallas.DeleteModel
+@{
+    ViewData["Title"] = "Eliminar Pantalla";
+}
+
+<h3 class="mb-3">Eliminar Pantalla</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Pantalla == null)
+{
+    <div class="alert alert-warning">No se encontró la pantalla.</div>
+    <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+}
+else
+{
+    <div class="alert alert-warning">
+        ¿Seguro que deseas eliminar esta pantalla?
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" value="@Model.Pantalla.nombre" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <input class="form-control" value="@Model.Pantalla.descripcion" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Ruta</label>
+                <input class="form-control" value="@Model.Pantalla.ruta" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Estado</label>
+                <input class="form-control" value="@Model.Pantalla.estado" readonly />
+            </div>
+
+            <form method="post" class="d-flex gap-2">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="id" />
+
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+}

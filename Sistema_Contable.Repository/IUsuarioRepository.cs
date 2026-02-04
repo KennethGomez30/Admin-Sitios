@@ -13,6 +13,8 @@ namespace Sistema_Contable.Repository
         Task ActualizarIntentosLoginAsync(string identificacion, int intentos);
         Task BloquearUsuarioAsync(string identificacion);
 
+        Task<bool> TieneAccesoRutaAsync(string usuarioId, string ruta);
+
         // adm7
         Task<List<UsuarioConRoles>> ObtenerTodosPaginadoAsync(int pagina, int porPagina);
         Task<int> ContarTotalAsync();

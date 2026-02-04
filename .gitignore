@@ -484,3 +484,15 @@ $RECYCLE.BIN/
 **/bin/
 **/obj/
 .vs/
+
+## .NET
+bin/
+obj/
+**/bin/
+**/obj/
+
+.vs/
+*.user
+*.suo
+*.cache
+*.log

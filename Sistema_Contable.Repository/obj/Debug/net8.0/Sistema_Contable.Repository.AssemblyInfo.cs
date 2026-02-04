@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sistema_Contable.Repository")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+698e2586cd1675bfb824fbd13d189bc941da71bb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da45b992b8e440535bc096de48f3a05d3bf7e641")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sistema_Contable.Repository")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sistema_Contable.Repository")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

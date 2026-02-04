@@ -5,35 +5,50 @@ namespace Sistema_Contable.Filters
 {
     public class AutenticacionFilter : IPageFilter
     {
+        public void OnPageHandlerSelected(PageHandlerSelectedContext context)
+        {
+        }
+
         public void OnPageHandlerExecuting(PageHandlerExecutingContext context)
         {
-            var pagina = context.ActionDescriptor.RelativePath;
+            var pagePath = context.ActionDescriptor.RelativePath;
 
-            // Páginas que NO requieren autenticación
-            if (pagina != null && (pagina.Contains("/Login.cshtml") || pagina.Contains("/Logout.cshtml")))
+            // Páginas que NO requieren autenticación (solo Login)
+            var paginasPublicas = new[] { "/Login" };
+
+            // Verificar si la página actual es pública
+            bool esPaginaPublica = false;
+            if (pagePath != null)
+            {
+                foreach (var paginaPublica in paginasPublicas)
+                {
+                    if (pagePath.Contains(paginaPublica, StringComparison.OrdinalIgnoreCase))
+                    {
+                        esPaginaPublica = true;
+                        break;
+                    }
+                }
+            }
+
+            // Si es página pública, permitir acceso
+            if (esPaginaPublica)
             {
                 return;
             }
 
-            // Verificar si hay sesión activa
+            // Para todas las demás páginas, verificar sesión
             var usuarioId = context.HttpContext.Session.GetString("UsuarioId");
 
             if (string.IsNullOrEmpty(usuarioId))
             {
-                // Guardar mensaje para mostrar en Login
+                // No hay sesión activa, redirigir a Login
                 context.HttpContext.Session.SetString("MensajeRedireccion",
                     "Por favor inicie sesión para utilizar el sistema");
-
-                // Bloquear acceso y redirigir a Login
                 context.Result = new RedirectToPageResult("/Login");
             }
         }
 
         public void OnPageHandlerExecuted(PageHandlerExecutedContext context)
-        {
-        }
-
-        public void OnPageHandlerSelected(PageHandlerSelectedContext context)
         {
         }
     }

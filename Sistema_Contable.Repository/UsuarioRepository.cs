@@ -48,5 +48,24 @@ namespace Sistema_Contable.Repository
 
             await connection.ExecuteAsync(query, new { Identificacion = identificacion });
         }
+
+        public async Task<bool> TieneAccesoRutaAsync(string usuarioId, string ruta)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+
+            var sql = @"
+        SELECT 1
+        FROM UsuarioRoles ur
+        JOIN Roles r ON r.IdRol = ur.RolId
+        JOIN RolPantalla rp ON rp.IdRol = r.IdRol
+        JOIN pantallas p ON p.pantalla_id = rp.pantalla_id
+        WHERE ur.UsuarioIdentificacion = @usuarioId
+          AND p.ruta = @ruta
+          AND p.estado = 'Activa'
+        LIMIT 1;";
+
+            var res = await connection.ExecuteScalarAsync<int?>(sql, new { usuarioId, ruta });
+            return res.HasValue;
+        }
     }
 }

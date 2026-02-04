@@ -12,5 +12,7 @@ namespace Sistema_Contable.Repository
         Task<Usuario?> ObtenerPorIdentificacionAsync(string identificacion);
         Task ActualizarIntentosLoginAsync(string identificacion, int intentos);
         Task BloquearUsuarioAsync(string identificacion);
+
+        Task<bool> TieneAccesoRutaAsync(string usuarioId, string ruta);
     }
 }

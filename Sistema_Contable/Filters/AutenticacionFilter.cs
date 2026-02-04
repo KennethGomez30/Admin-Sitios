@@ -1,40 +1,76 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Sistema_Contable.Repository;
 
 namespace Sistema_Contable.Filters
 {
-    public class AutenticacionFilter : IPageFilter
+    public class AutenticacionFilter : IAsyncPageFilter
     {
-        public void OnPageHandlerExecuting(PageHandlerExecutingContext context)
-        {
-            var pagina = context.ActionDescriptor.RelativePath;
+        private readonly IUsuarioRepository _usuarioRepository;
 
-            // Páginas que NO requieren autenticación
-            if (pagina != null && (pagina.Contains("/Login.cshtml") || pagina.Contains("/Logout.cshtml")))
+        public AutenticacionFilter(IUsuarioRepository usuarioRepository)
+        {
+            _usuarioRepository = usuarioRepository;
+        }
+
+        public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
+        {
+            var pagina = context.ActionDescriptor.RelativePath ?? "";
+
+            var rutaActual = NormalizarRuta(pagina);
+
+            if (rutaActual.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
+                rutaActual.Equals("/Logout", StringComparison.OrdinalIgnoreCase) ||
+                rutaActual.Equals("/Error", StringComparison.OrdinalIgnoreCase))
             {
+                await next();
                 return;
             }
 
-            // Verificar si hay sesión activa
             var usuarioId = context.HttpContext.Session.GetString("UsuarioId");
-
             if (string.IsNullOrEmpty(usuarioId))
             {
-                // Guardar mensaje para mostrar en Login
                 context.HttpContext.Session.SetString("MensajeRedireccion",
                     "Por favor inicie sesión para utilizar el sistema");
 
-                // Bloquear acceso y redirigir a Login
                 context.Result = new RedirectToPageResult("/Login");
+                return;
             }
+
+            if (rutaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase))
+            {
+                await next();
+                return;
+            }
+
+            var tieneAcceso = await _usuarioRepository.TieneAccesoRutaAsync(usuarioId, rutaActual);
+
+            if (!tieneAcceso)
+            {
+                context.HttpContext.Session.SetString("MensajeRedireccion",
+                    "No tiene permisos para acceder a esta pantalla.");
+
+                context.Result = new RedirectToPageResult("/Index");
+                return;
+            }
+
+            await next();
         }
 
-        public void OnPageHandlerExecuted(PageHandlerExecutedContext context)
-        {
-        }
+        public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) => Task.CompletedTask;
 
-        public void OnPageHandlerSelected(PageHandlerSelectedContext context)
+        private static string NormalizarRuta(string relativePath)
         {
+
+            var ruta = relativePath.Replace(".cshtml", "");
+
+            if (ruta.StartsWith("/Pages/", StringComparison.OrdinalIgnoreCase))
+                ruta = ruta.Substring("/Pages".Length);
+
+            if (string.IsNullOrWhiteSpace(ruta))
+                ruta = "/Index";
+
+            return ruta;
         }
     }
 }

@@ -1,0 +1,53 @@
+# Archivos de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Directorios binarios
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Configuración temporal de VS
+.vs/
+.vscode/
+
+# Archivos de build
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.zip
+
+# Configuración de dependencias
+node_modules/
+packages/
+
+# Archivos del sistema
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.DS_Store
+
+# Publicaciones
+/publish/
+/Release/
+/Debug/
+
+# Configuración local
+appsettings.Development.json
+appsettings.Local.json
+*.env
+
+# Archivos generados
+*.nupkg
+*.snupkg
+
+# Archivos de pruebas
+TestResult*/
+coverage*/
+
+*.slnLaunch.user

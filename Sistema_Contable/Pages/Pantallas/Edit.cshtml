@@ -1,0 +1,53 @@
+﻿@page
+@model Sistema_Contable.Pages.Pantallas.EditModel
+@{
+    ViewData["Title"] = "Editar Pantalla";
+}
+
+<h3 class="mb-3">Editar Pantalla</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Pantalla.pantalla_id" />
+
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input asp-for="Pantalla.nombre" class="form-control" />
+        <span asp-validation-for="Pantalla.nombre" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Descripción</label>
+        <input asp-for="Pantalla.descripcion" class="form-control" />
+        <span asp-validation-for="Pantalla.descripcion" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ruta</label>
+        <input asp-for="Pantalla.ruta" class="form-control" />
+        <span asp-validation-for="Pantalla.ruta" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Estado</label>
+        <select asp-for="Pantalla.estado" class="form-select">
+            <option value="Activa">Activa</option>
+            <option value="Inactiva">Inactiva</option>
+        </select>
+        <span asp-validation-for="Pantalla.estado" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

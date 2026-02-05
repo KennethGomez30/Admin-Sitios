@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.DataProtection.Repositories;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Sistema_Contable.Filters;
 using Sistema_Contable.Repository;
 using Sistema_Contable.Services;
@@ -8,9 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages(options =>
 {
-    // Registrar el filtro de autenticación globalmente
-    options.Conventions.ConfigureFilter(new AutenticacionFilter());
+    options.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(AutenticacionFilter)));
 });
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 // Registrar DbConnectionFactory como Singleton
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
@@ -22,6 +28,13 @@ builder.Services.AddScoped<IRolRepository, RolRepository>();
 
 // Registrar servicios
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
+
+// Registrar repositorios y servicios de pantallas
+builder.Services.AddScoped<IPantallaRepository, PantallaRepository>();
+builder.Services.AddScoped<IPantallaService, PantallaService>();
+
+//Registrar el filtro de autenticación
+builder.Services.AddScoped<AutenticacionFilter>();
 
 // Configurar sesión - ADM4: 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();

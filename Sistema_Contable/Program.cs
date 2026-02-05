@@ -11,6 +11,9 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(AutenticacionFilter)));
 });
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 // Registrar DbConnectionFactory como Singleton
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
@@ -19,9 +22,7 @@ builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IBitacoraRepository, BitacoraRepository>();
 builder.Services.AddScoped<IRolRepository, RolRepository>();
 
-// Registrar repositorios y servicios de usuarios y bitácora
-builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(connectionString));
-builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
+// Registrar servicios
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
 
 // Registrar repositorios y servicios de pantallas

@@ -36,11 +36,13 @@ builder.Services.AddScoped<IPantallaService, PantallaService>();
 //Registrar el filtro de autenticación
 builder.Services.AddScoped<AutenticacionFilter>();
 
+
 // Configurar sesión - ADM4: 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(5);
+    options.IdleTimeout = TimeSpan.FromMinutes(6);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });

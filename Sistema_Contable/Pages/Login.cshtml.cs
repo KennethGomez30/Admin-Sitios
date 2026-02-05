@@ -34,7 +34,7 @@ namespace Sistema_Contable.Pages
                 Response.Redirect("/Index");
                 return;
             }
-
+            /*
             // Leer mensaje ANTES de limpiar
             var mensajeRedireccion = HttpContext.Session.GetString("MensajeRedireccion");
 
@@ -45,7 +45,13 @@ namespace Sistema_Contable.Pages
             if (!string.IsNullOrEmpty(mensajeRedireccion))
             {
                 MensajeInfo = mensajeRedireccion;
-            }
+            }*/
+
+            // Leer mensaje de redirección
+            MensajeInfo = HttpContext.Session.GetString("MensajeRedireccion");
+
+            // Eliminar SOLO el mensaje
+            HttpContext.Session.Remove("MensajeRedireccion");
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -58,7 +64,7 @@ namespace Sistema_Contable.Pages
                 HttpContext.Session.SetString("UsuarioId", resultado.Usuario.Identificacion);
                 HttpContext.Session.SetString("UsuarioNombre", resultado.Usuario.NombreCompleto);
                 HttpContext.Session.SetString("UsuarioCorreo", resultado.Usuario.Correo);
-
+                HttpContext.Session.SetString("UltimoAccesoUtc", DateTime.UtcNow.ToString("O")); // login expira 
                 // Redirigir a la página de bienvenida (Index)
                 return RedirectToPage("/Index");
             }

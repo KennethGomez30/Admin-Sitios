@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.DataProtection.Repositories;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Sistema_Contable.Filters;
 using Sistema_Contable.Repository;
 using Sistema_Contable.Services;

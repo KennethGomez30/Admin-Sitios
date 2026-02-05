@@ -62,6 +62,7 @@ namespace Sistema_Contable.Pages.Usuarios
                 // Verificar si tiene relaciones
                 if (await _usuarioRepository.TieneRelacionesAsync(identificacionEliminar))
                 {
+                    await RegistrarBitacoraAsync(usuarioActual, $"Intento fallido de eliminar usuario '{identificacionEliminar}'  - Tiene datos relacionados");
                     TempData["MensajeError"] = "No se puede eliminar un registro con datos relacionados.";
                     return RedirectToPage();
                 }
@@ -91,6 +92,7 @@ namespace Sistema_Contable.Pages.Usuarios
                 }
                 else
                 {
+                    await RegistrarBitacoraAsync(usuarioActual, $"Intento fallido de eliminar usuario '{identificacionEliminar}' - No se pudo eliminar");
                     TempData["MensajeError"] = "No se pudo eliminar el usuario.";
                 }
             }

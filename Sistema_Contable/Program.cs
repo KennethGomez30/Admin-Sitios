@@ -41,7 +41,6 @@ builder.Services.AddScoped<AutenticacionFilter>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(5);
     options.IdleTimeout = TimeSpan.FromMinutes(6);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;

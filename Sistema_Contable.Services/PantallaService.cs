@@ -184,5 +184,21 @@ namespace Sistema_Contable.Services
 
             await _bitacoraRepository.RegistrarAsync(bitacora);
         }
+
+        public async Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId)
+        {
+            try
+            {
+                // opcional: bitácora si querés
+                // await RegistrarBitacoraAsync(usuarioId, "Consulta menú por usuario");
+
+                return await _pantallaRepository.ObtenerMenuPorUsuarioAsync(usuarioId);
+            }
+            catch (Exception ex)
+            {
+                await RegistrarBitacoraAsync(usuarioId, $"Error técnico consultando menú: {ex.Message}");
+                throw;
+            }
+        }
     }
 }

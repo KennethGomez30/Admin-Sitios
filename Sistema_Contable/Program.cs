@@ -19,6 +19,14 @@ builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(conne
 builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
 
+builder.Services.AddScoped<IEstadosAsientoRepository>(sp => new EstadosAsientoRepository(connectionString));
+builder.Services.AddScoped<IEstadosAsientoService, EstadoAsientoService>();
+
+builder.Services.AddScoped<IPeriodoContableRepository>(_ => new PeriodoContableRepository(connectionString!));
+builder.Services.AddScoped<IPeriodoContableService, PeriodoContableService>();
+
+
+
 // Configurar sesión - ADM4: 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

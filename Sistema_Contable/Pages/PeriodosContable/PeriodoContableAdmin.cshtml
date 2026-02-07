@@ -1,0 +1,111 @@
+﻿@page
+@model Sistema_Contable.Pages.PeriodosContable.PeriodoContableAdminModel
+@{
+    ViewData["Title"] = "Períodos Contables";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Períodos Contables</h1>
+
+    <a asp-page="./Crear" class="btn btn-primary btn-sm shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Añadir
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Listado</h6>
+
+        <form method="get" class="form-inline">
+            <label class="mr-2 font-weight-bold">Estado:</label>
+            <select name="Estado" class="form-control form-control-sm mr-2">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Estado))">Todos</option>
+                <option value="Abierto" selected="@(Model.Estado == "Abierto")">Abierto</option>
+                <option value="Cerrado" selected="@(Model.Estado == "Cerrado")">Cerrado</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" type="submit">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Año</th>
+                        <th>Mes</th>
+                        <th>Estado</th>
+                        <th>Activo</th>
+                        <th>Usuario cierre</th>
+                        <th>Fecha cierre</th>
+                        <th style="width:260px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.Periodos)
+                    {
+                        <tr>
+                            <td>@p.Anio</td>
+                            <td>@p.Mes.ToString("D2")</td>
+                            <td>
+                                @if (p.Estado == "Abierto")
+                                {
+                                    <span class="badge badge-success">Abierto</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-danger">Cerrado</span>
+                                }
+                            </td>
+                            <td>
+                                @if (p.Activo)
+                                {
+                                    <span class="badge badge-primary">Sí</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">No</span>
+                                }
+                            </td>
+                            <td>@(p.UsuarioCierre ?? "-")</td>
+                            <td>@(p.FechaCierre?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td class="text-center">
+                                <a asp-page="./Editar" asp-route-id="@p.PeriodoId" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+
+                                <a asp-page="./Eliminar" asp-route-id="@p.PeriodoId" class="btn btn-danger btn-sm ml-1">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </a>
+
+                                @if (p.Estado == "Abierto")
+                                {
+                                    <a asp-page="./Cerrar" asp-route-id="@p.PeriodoId" class="btn btn-dark btn-sm ml-1">
+                                        <i class="fas fa-lock"></i> Cerrar
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-page="./Reabrir" asp-route-id="@p.PeriodoId" class="btn btn-info btn-sm ml-1">
+                                        <i class="fas fa-unlock"></i> Reabrir
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            if ($.fn.DataTable) $('#dataTable').DataTable();
+        });
+    </script>
+}
+

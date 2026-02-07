@@ -1,0 +1,70 @@
+﻿@page
+@model Sistema_Contable.Pages.EstadosAsientos.EstadoAsientoModel
+@{
+    ViewData["Title"] = "Estados de Asiento";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Estados de Asiento</h1>
+    <a asp-page="./EstadoAsientosCrear" class="btn btn-primary btn-sm shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Añadir
+    </a>
+</div>
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Listado</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th style="width:150px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model.Estados)
+                    {
+                        <tr>
+                            <td>@e.Codigo</td>
+                            <td>@e.Nombre</td>
+                            <td>@e.Descripcion</td>
+                            <td class="text-center">
+                                <a asp-page="./EstadoAsientosEditar" asp-route-codigo="@e.Codigo"
+                                   class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <a asp-page="./EstadoAsientosEliminar" asp-route-codigo="@e.Codigo"
+                                   class="btn btn-danger btn-sm ml-1">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#dataTable').DataTable();
+        });
+    </script>
+}

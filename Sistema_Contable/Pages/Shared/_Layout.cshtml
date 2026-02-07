@@ -19,6 +19,7 @@
 
     <!-- SB Admin 2 CSS -->
     <link rel="stylesheet" href="~/css/sb-admin-2.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/vendor/datatables/dataTables.bootstrap4.css" asp-append-version="true" />
 
     <!-- CSS personalizado -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -81,7 +82,22 @@
                 </a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" asp-page="/EstadosAsientos/EstadoAsientos">
+                    <i class="fas fa-fw fa-desktop"></i>
+                    <span>Estados de Asientos</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" asp-page="/PeriodosContable/PeriodoContableAdmin">
+                    <i class="fas fa-fw fa-calendar"></i>
+                    <span>Períodos Contables</span>
+                </a>
+            </li>
+
             <hr class="sidebar-divider d-none d-md-block" />
+
 
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
@@ -127,6 +143,7 @@
                 <!-- End Topbar -->
 
                 <div class="container-fluid">
+                    <partial name="_Alerts" />
                     @RenderBody()
                 </div>
 
@@ -150,6 +167,9 @@
     <script src="~/vendor/jquery/jquery.min.js" asp-append-version="true"></script>
     <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/vendor/jquery-easing/jquery.easing.min.js" asp-append-version="true"></script>
+    <script src="~/vendor/datatables/jquery.dataTables.js" asp-append-version="true"></script>
+    <script src="~/vendor/datatables/dataTables.bootstrap4.js" asp-append-version="true"></script>
+
     <script src="~/js/sb-admin-2.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 

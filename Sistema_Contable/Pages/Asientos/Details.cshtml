@@ -1,0 +1,94 @@
+﻿@page "{id:long}"
+@model Sistema_Contable.Pages.Asientos.DetailsModel
+@{
+    ViewData["Title"] = "Detalle de Asiento";
+}
+
+<h3 class="mb-3">Detalle de Asiento Contable</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label">Consecutivo</label>
+                <input class="form-control" value="@Model.Asiento.Consecutivo" disabled />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Fecha del Asiento</label>
+                <input class="form-control"
+                       value="@Model.Asiento.FechaAsiento.ToString("yyyy-MM-dd")"
+                       disabled />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Código</label>
+                <input class="form-control" value="@Model.Asiento.Codigo" disabled />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <input class="form-control" value="@Model.Asiento.EstadoCodigo" disabled />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Referencia</label>
+            <input class="form-control" value="@Model.Asiento.Referencia" disabled />
+        </div>
+    </div>
+</div>
+
+<h5>Detalle del Asiento</h5>
+
+<table class="table table-bordered table-sm">
+    <thead class="table-light">
+        <tr>
+            <th>Cuenta ID</th>
+            <th>Tipo Movimiento</th>
+            <th class="text-end">Monto</th>
+            <th>Descripción</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var d in Model.Detalle)
+        {
+            <tr>
+                <td>@d.CuentaId</td>
+                <td>@d.TipoMovimiento</td>
+                <td class="text-end">@d.Monto.ToString("N2")</td>
+                <td>@d.Descripcion</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="row mt-3">
+    <div class="col-md-3">
+        <strong>Total Débito:</strong> @Model.Asiento.TotalDebito.ToString("N2")
+    </div>
+
+    <div class="col-md-3">
+        <strong>Total Crédito:</strong> @Model.Asiento.TotalCredito.ToString("N2")
+    </div>
+
+    <div class="col-md-6">
+        @if (Model.Asiento.TotalDebito == Model.Asiento.TotalCredito)
+        {
+            <span class="badge bg-success">Asiento Balanceado</span>
+        }
+        else
+        {
+            <span class="badge bg-danger">Asiento NO Balanceado</span>
+        }
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+</div>

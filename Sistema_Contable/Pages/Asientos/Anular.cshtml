@@ -1,0 +1,119 @@
+﻿@page "{id:long}"
+@model Sistema_Contable.Pages.Asientos.AnularModel
+@{
+    ViewData["Title"] = "Anular Asiento";
+}
+
+<h3 class="mb-3">Anular Asiento</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="mb-3">
+    <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+</div>
+
+@if (Model.Asiento == null)
+{
+    <div class="alert alert-warning">Asiento no encontrado.</div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <label class="form-label">Consecutivo</label>
+                    <input class="form-control" value="@Model.Asiento.Consecutivo" readonly />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha</label>
+                    <input class="form-control" value="@Model.Asiento.FechaAsiento.ToString("yyyy-MM-dd")" readonly />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Código</label>
+                    <input class="form-control" value="@Model.Asiento.Codigo" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Referencia</label>
+                    <input class="form-control" value="@Model.Asiento.Referencia" readonly />
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <span class="badge @(Model.Asiento.EstadoCodigo == "Anulado" ? "bg-danger" : "bg-warning")">
+                    @Model.Asiento.EstadoCodigo
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <h5>Detalle</h5>
+    <div class="table-responsive mb-3">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Cuenta</th>
+                    <th>Movimiento</th>
+                    <th class="text-end">Monto</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Detalles.Any())
+                {
+                    <tr><td colspan="4" class="text-center">No hay líneas.</td></tr>
+                }
+                else
+                {
+                    foreach (var d in Model.Detalles)
+                    {
+                        <tr>
+                            <td>@(d.CodigoCuenta ?? d.CuentaId.ToString())</td>
+                            <td>@d.TipoMovimiento</td>
+                            <td class="text-end">@d.Monto.ToString("F2")</td>
+                            <td>@d.Descripcion</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex gap-3 align-items-center mb-4">
+        <div>
+            <label class="form-label mb-0">Total Débito</label>
+            <div class="fw-bold">@Model.TotalDebito.ToString("F2")</div>
+        </div>
+        <div>
+            <label class="form-label mb-0">Total Crédito</label>
+            <div class="fw-bold">@Model.TotalCredito.ToString("F2")</div>
+        </div>
+        <div class="ms-3">
+            <span class="badge @(Model.Balanceado ? "bg-success" : "bg-danger")">
+                @(Model.Balanceado ? "Balanceado" : "No balanceado")
+            </span>
+        </div>
+    </div>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Asiento.AsientoId" />
+        @if (Model.PuedeAnular)
+        {
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Confirma anular este asiento? Esta acción no se puede deshacer.')">
+                    Anular asiento
+                </button>
+                <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">Este asiento no puede ser anulado (ya está anulado o tiene restricciones).</div>
+        }
+    </form>
+}
+

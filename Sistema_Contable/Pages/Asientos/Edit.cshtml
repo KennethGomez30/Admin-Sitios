@@ -1,0 +1,257 @@
+﻿@page "{id:long}"
+@model Sistema_Contable.Pages.Asientos.EditModel
+@{
+    ViewData["Title"] = "Editar Asiento";
+}
+
+<h3 class="mb-3">Editar Asiento</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (!Model.PuedeEditar)
+{
+    <div class="alert alert-warning">
+        El asiento se encuentra en estado <strong>@Model.Asiento.EstadoCodigo</strong> y no puede ser editado.
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Asiento.AsientoId" />
+    <input type="hidden" id="eliminados" name="Eliminados" value="" />
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-2">
+            <label class="form-label">Consecutivo</label>
+            <input asp-for="Asiento.Consecutivo" class="form-control" readonly />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input asp-for="Asiento.FechaAsiento"
+                   class="form-control"
+                   type="date"
+                   disabled="@(Model.PuedeEditar ? null : "disabled")" />
+            <span asp-validation-for="Asiento.FechaAsiento" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Código</label>
+            <input asp-for="Asiento.Codigo"
+                   class="form-control"
+                   disabled="@(Model.PuedeEditar ? null : "disabled")" />
+            <span asp-validation-for="Asiento.Codigo" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Referencia</label>
+            <input asp-for="Asiento.Referencia"
+                   class="form-control"
+                   disabled="@(Model.PuedeEditar ? null : "disabled")" />
+            <span asp-validation-for="Asiento.Referencia" class="text-danger"></span>
+        </div>
+    </div>
+
+    <hr />
+
+    <h5 class="mb-2">Detalle del asiento</h5>
+
+    <div class="table-responsive mb-2">
+        <table class="table table-sm align-middle" id="detalle-table">
+            <thead>
+                <tr>
+                    <th style="width:30%;">Cuenta</th>
+                    <th style="width:15%;">Movimiento</th>
+                    <th style="width:15%;">Monto</th>
+                    <th>Descripción</th>
+                    <th style="width:90px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Detalles.Count; i++)
+                {
+                    var d = Model.Detalles[i];
+                    <tr class="detalle-row">
+                        <input type="hidden" name="Detalles[@i].DetalleId" value="@d.DetalleId" />
+                        <td>
+                            <select name="Detalles[@i].CuentaId" class="form-select form-select-sm" @(Model.PuedeEditar ? "" : "disabled")>
+                                <option value="">-- Seleccione --</option>
+                                @foreach (var c in Model.Cuentas)
+                                {
+                                    <option value="@c.Value" selected="@(c.Value == d.CuentaId.ToString())">@c.Text</option>
+                                }
+                            </select>
+                        </td>
+                        <td>
+                            <select name="Detalles[@i].TipoMovimiento" class="form-select form-select-sm" @(Model.PuedeEditar ? "" : "disabled")>
+                                <option value="deudor" selected="@(d.TipoMovimiento == "deudor")">Deudor</option>
+                                <option value="acreedor" selected="@(d.TipoMovimiento == "acreedor")">Acreedor</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input name="Detalles[@i].Monto" class="form-control form-control-sm monto-input" value="@d.Monto.ToString("F2")" @(Model.PuedeEditar ? "" : "disabled") />
+                        </td>
+                        <td>
+                            <input name="Detalles[@i].Descripcion" class="form-control form-control-sm" value="@d.Descripcion" @(Model.PuedeEditar ? "" : "disabled") />
+                        </td>
+                        <td>
+                            @if (Model.PuedeEditar)
+                            {
+                                <button type="button" class="btn btn-sm btn-danger btn-remove">Eliminar</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+        @if (Model.PuedeEditar)
+        {
+            <button type="button" id="btn-add-line" class="btn btn-outline-secondary btn-sm">Agregar línea</button>
+        }
+    </div>
+
+    <div class="mb-3">
+        <div class="d-flex gap-3 align-items-center">
+            <div>
+                <label class="form-label mb-0">Total Débito</label>
+                <div class="fw-bold" id="total-debito">@Model.TotalDebito.ToString("F2")</div>
+            </div>
+            <div>
+                <label class="form-label mb-0">Total Crédito</label>
+                <div class="fw-bold" id="total-credito">@Model.TotalCredito.ToString("F2")</div>
+            </div>
+            <div class="ms-3">
+                <span id="balance-indicator" class="badge @(Model.Balanceado ? "bg-success" : "bg-danger")">
+                    @(Model.Balanceado ? "Balanceado" : "No balanceado")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        @if (Model.PuedeEditar)
+        {
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        }
+        <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+        @if (Model.PuedeAnular)
+        {
+            <button type="button" id="btn-anular" class="btn btn-outline-danger">Anular</button>
+        }
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const table = document.querySelector('#detalle-table tbody');
+            const addBtn = document.getElementById('btn-add-line');
+            const eliminadosInput = document.getElementById('eliminados');
+
+            function reindex() {
+                const rows = table.querySelectorAll('.detalle-row');
+                rows.forEach((row, i) => {
+                    row.querySelectorAll('input, select').forEach(el => {
+                        if (el.name) el.name = el.name.replace(/\[\d+\]/, '[' + i + ']');
+                    });
+                });
+            }
+
+            function recalcTotals() {
+                let debito = 0, credito = 0;
+
+                table.querySelectorAll('.detalle-row').forEach(r => {
+                    const tipoEl = r.querySelector('select[name$=".TipoMovimiento"]');
+                    const montoEl = r.querySelector('input[name$=".Monto"]');
+                    if (!tipoEl || !montoEl) return;
+
+                    const tipo = tipoEl.value;
+                    const monto = parseFloat(montoEl.value.replace(',', '.')) || 0;
+
+                    if (tipo === 'deudor') debito += monto;
+                    if (tipo === 'acreedor') credito += monto;
+                });
+
+                document.getElementById('total-debito').textContent = debito.toFixed(2);
+                document.getElementById('total-credito').textContent = credito.toFixed(2);
+
+                const badge = document.getElementById('balance-indicator');
+                if (debito === credito && debito > 0) {
+                    badge.className = 'badge bg-success';
+                    badge.textContent = 'Balanceado';
+                } else {
+                    badge.className = 'badge bg-danger';
+                    badge.textContent = 'No balanceado';
+                }
+            }
+
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    const firstRow = table.querySelector('.detalle-row');
+                    const clone = firstRow.cloneNode(true);
+
+                    // reset inputs
+                    clone.querySelectorAll('input').forEach(i => {
+                        const name = i.name || '';
+                        if (name.endsWith('.DetalleId')) {
+                            i.value = '0'; // nuevo detalle
+                        } else {
+                            i.value = '';
+                        }
+                    });
+                    clone.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+
+                    table.appendChild(clone);
+                    reindex();
+                });
+            }
+
+            table.addEventListener('click', e => {
+                if (e.target.classList.contains('btn-remove')) {
+                    const tr = e.target.closest('tr');
+                    // si tiene DetalleId > 0, agregar al campo eliminados
+                    const hid = tr.querySelector('input[name$=".DetalleId"]');
+                    if (hid && hid.value && hid.value !== '0') {
+                        const current = eliminadosInput.value ? eliminadosInput.value.split(',') : [];
+                        current.push(hid.value);
+                        eliminadosInput.value = current.join(',');
+                    }
+                    tr.remove();
+                    reindex();
+                    recalcTotals();
+                }
+            });
+
+            table.addEventListener('input', recalcTotals);
+
+            // anular
+            const btnAnular = document.getElementById('btn-anular');
+            if (btnAnular) {
+                btnAnular.addEventListener('click', function () {
+                    if (!confirm('¿Anular el asiento? Esta acción no se puede deshacer.')) return;
+                    // enviar petición POST para anular usando fetch
+                    fetch(`@Url.Page("Edit", new { id = Model.Asiento.AsientoId })/anular`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
+                        body: JSON.stringify({ asientoId: @Model.Asiento.AsientoId })
+                    }).then(r => {
+                        if (r.ok) location.href = '@Url.Page("Index")';
+                        else r.text().then(t => alert('Error: ' + t));
+                    });
+                });
+            }
+
+            // inicial
+            recalcTotals();
+        })();
+    </script>
+}
+

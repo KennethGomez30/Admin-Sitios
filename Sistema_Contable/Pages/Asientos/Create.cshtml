@@ -1,0 +1,173 @@
+﻿@page
+@model Sistema_Contable.Pages.Asientos.CreateModel
+@{
+    ViewData["Title"] = "Nuevo Asiento";
+}
+
+<h3 class="mb-3">Nuevo Asiento</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label class="form-label">Fecha</label>
+            <input asp-for="Asiento.FechaAsiento" class="form-control" type="date" />
+            <span asp-validation-for="Asiento.FechaAsiento" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Código</label>
+            <input asp-for="Asiento.Codigo" class="form-control" />
+            <span asp-validation-for="Asiento.Codigo" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Referencia</label>
+            <input asp-for="Asiento.Referencia" class="form-control" />
+            <span asp-validation-for="Asiento.Referencia" class="text-danger"></span>
+        </div>
+    </div>
+
+    <hr />
+
+    <h5 class="mb-2">Detalle del asiento</h5>
+
+    <div class="table-responsive mb-2">
+        <table class="table table-sm align-middle" id="detalle-table">
+            <thead>
+                <tr>
+                    <th style="width:30%;">Cuenta</th>
+                    <th style="width:15%;">Movimiento</th>
+                    <th style="width:15%;">Monto</th>
+                    <th>Descripción</th>
+                    <th style="width:90px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="detalle-row">
+                    <td>
+                        <select name="Detalles[0].CuentaId" class="form-select form-select-sm">
+                            <option value="">-- Seleccione --</option>
+                            @foreach (var c in Model.Cuentas)
+                            {
+                                <option value="@c.Value">@c.Text</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <select name="Detalles[0].TipoMovimiento" class="form-select form-select-sm">
+                            <option value="deudor">Deudor</option>
+                            <option value="acreedor">Acreedor</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input name="Detalles[0].Monto" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                        <input name="Detalles[0].Descripcion" class="form-control form-control-sm" />
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger btn-remove">Eliminar</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex gap-2 mb-3">
+        <button type="button" id="btn-add-line" class="btn btn-outline-secondary btn-sm">Agregar línea</button>
+    </div>
+
+    <div class="mb-3">
+        <div class="d-flex gap-3 align-items-center">
+            <div>
+                <label class="form-label mb-0">Total Débito</label>
+                <div class="fw-bold" id="total-debito">0.00</div>
+            </div>
+            <div>
+                <label class="form-label mb-0">Total Crédito</label>
+                <div class="fw-bold" id="total-credito">0.00</div>
+            </div>
+            <div class="ms-3">
+                <span id="balance-indicator" class="badge bg-secondary">No balanceado</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+        <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const table = document.querySelector('#detalle-table tbody');
+            const addBtn = document.getElementById('btn-add-line');
+
+            function reindex() {
+                const rows = table.querySelectorAll('.detalle-row');
+                rows.forEach((row, i) => {
+                    row.querySelectorAll('input, select').forEach(el => {
+                        el.name = el.name.replace(/\[\d+\]/, '[' + i + ']');
+                    });
+                });
+            }
+
+            function recalcTotals() {
+                let debito = 0, credito = 0;
+
+                table.querySelectorAll('.detalle-row').forEach(r => {
+                    const tipo = r.querySelector('select[name$=".TipoMovimiento"]').value;
+                    const monto = parseFloat(r.querySelector('input[name$=".Monto"]').value) || 0;
+
+                    if (tipo === 'deudor') debito += monto;
+                    if (tipo === 'acreedor') credito += monto;
+                });
+
+                document.getElementById('total-debito').textContent = debito.toFixed(2);
+                document.getElementById('total-credito').textContent = credito.toFixed(2);
+
+                const badge = document.getElementById('balance-indicator');
+                if (debito === credito && debito > 0) {
+                    badge.className = 'badge bg-success';
+                    badge.textContent = 'Balanceado';
+                } else {
+                    badge.className = 'badge bg-danger';
+                    badge.textContent = 'No balanceado';
+                }
+            }
+
+            addBtn.addEventListener('click', () => {
+                const firstRow = table.querySelector('.detalle-row');
+                const clone = firstRow.cloneNode(true);
+
+                clone.querySelectorAll('input').forEach(i => i.value = '');
+                clone.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+
+                table.appendChild(clone);
+                reindex();
+            });
+
+            table.addEventListener('click', e => {
+                if (e.target.classList.contains('btn-remove')) {
+                    e.target.closest('tr').remove();
+                    reindex();
+                    recalcTotals();
+                }
+            });
+
+            table.addEventListener('input', recalcTotals);
+        })();
+    </script>
+
+}

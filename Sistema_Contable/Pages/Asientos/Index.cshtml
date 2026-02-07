@@ -1,0 +1,78 @@
+﻿@page
+@model Sistema_Contable.Pages.Asientos.IndexModel
+@{
+    ViewData["Title"] = "Asientos Contables";
+}
+
+<h3 class="mb-3">Asientos Contables</h3>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form method="get" class="d-flex gap-2">
+        <select class="form-control" name="estado">
+            <option value="">-- Todos los estados --</option>
+            @foreach (var e in Model.Estados)
+            {
+
+                <option value="@e" selected="@(e == Model.EstadoFiltro)">
+                    @e
+                </option>
+            }
+        </select>
+
+        <button class="btn btn-outline-primary" type="submit">Filtrar</button>
+    </form>
+
+    <a class="btn btn-primary" asp-page="Create">Nuevo Asiento</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Código</th>
+                <th>Referencia</th>
+                <th>Débito</th>
+                <th>Crédito</th>
+                <th>Estado</th>
+                <th style="width:160px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Asientos.Any())
+            {
+                <tr>
+                    <td colspan="8" class="text-center">No hay asientos.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var a in Model.Asientos)
+                {
+                    <tr>
+                        <td>@a.Consecutivo</td>
+                        <td>@a.FechaAsiento.ToString("yyyy-MM-dd")</td>
+                        <td>@a.Codigo</td>
+                        <td>@a.Referencia</td>
+                        <td>@a.TotalDebito.ToString("C2")</td>
+                        <td>@a.TotalCredito.ToString("C2")</td>
+                        <td>@a.EstadoCodigo</td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-page="Edit"
+                               asp-route-id="@a.AsientoId">
+                                Ver / Editar
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

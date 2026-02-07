@@ -1,0 +1,156 @@
+﻿@page
+@model Sistema_Contable.Pages.CuentasContables.IndexModel
+@{
+    ViewData["Title"] = "Cuentas Contables";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-sitemap text-primary"></i> Administrador de Cuentas Contables
+    </h1>
+
+    <a class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" asp-page="Create">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Cuenta
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @Model.SuccessMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-times-circle"></i> @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Listado</h6>
+
+        <form method="get" class="form-inline">
+            <select name="Estado" class="form-control form-control-sm mr-2">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Estado))">Todos</option>
+                <option value="activa" selected="@(Model.Estado == "activa")">Activas</option>
+                <option value="inactiva" selected="@(Model.Estado == "inactiva")">Inactivas</option>
+            </select>
+
+            <button class="btn btn-sm btn-outline-primary" type="submit">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Código Cuenta</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Tipo Saldo</th>
+                        <th>Cuenta Padre</th>
+                        <th class="text-center">Acepta Mov.</th>
+                        <th>Estado</th>
+                        <th class="text-center" style="width:140px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model.Items)
+                    {
+                        <tr>
+                            <td>@x.Codigo</td>
+                            <td>@x.Nombre</td>
+                            <td>@x.Tipo</td>
+                            <td>@x.TipoSaldo</td>
+                            <td>
+                                @(string.IsNullOrWhiteSpace(x.CuentaPadreCodigo)
+                                                            ? "-"
+                                                            : $"{x.CuentaPadreCodigo} - {x.CuentaPadreNombre}")
+                        </td>
+                        <td class="text-center">@(x.AceptaMovimiento ? "Sí" : "No")</td>
+                        <td>@(x.Activo ? "Activa" : "Inactiva")</td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-warning" asp-page="Edit" asp-route-id="@x.IdCuenta" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        data-toggle="modal" data-target="#deleteModal"
+                                        data-id="@x.IdCuenta"
+                                        data-label="@($"{x.Codigo} - {x.Nombre}")"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                                        }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-end">
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link"
+                               asp-page="./Index"
+                               asp-route-Estado="@Model.Estado"
+                               asp-route-Page="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+<!-- Modal eliminar (flow ADM6) -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form method="post" asp-page-handler="Eliminar">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmación</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+                    ¿Realmente desea eliminar el elemento seleccionado?
+                    <div class="mt-2 text-muted small" id="deleteLabel"></div>
+                    <input type="hidden" id="deleteId" name="id" />
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button type="submit" class="btn btn-danger">Sí</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            var btn = $(event.relatedTarget);
+            $('#deleteId').val(btn.data('id'));
+            $('#deleteLabel').text(btn.data('label'));
+        });
+    </script>
+}

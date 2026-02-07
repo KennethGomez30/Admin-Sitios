@@ -1,0 +1,91 @@
+﻿@page
+@model Sistema_Contable.Pages.CuentasContables.EditModel
+@{
+    ViewData["Title"] = "Editar Cuenta Contable";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-edit text-primary"></i> Editar Cuenta Contable
+    </h1>
+
+    <a class="btn btn-sm btn-secondary shadow-sm" asp-page="Index">
+        <i class="fas fa-arrow-left fa-sm"></i> Volver
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-times-circle"></i> @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Datos de la cuenta</h6>
+    </div>
+
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Cuenta.IdCuenta" />
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>Código</label>
+                    <input class="form-control" asp-for="Cuenta.Codigo" maxlength="20" />
+                </div>
+
+                <div class="form-group col-md-8">
+                    <label>Nombre</label>
+                    <input class="form-control" asp-for="Cuenta.Nombre" maxlength="100" />
+                    <small class="text-muted">Máx 100 caracteres. Solo letras, números y espacios.</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>Tipo</label>
+                    <select class="form-control" asp-for="Cuenta.Tipo" asp-items="Model.TiposCuenta"></select>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label>Tipo de saldo</label>
+                    <select class="form-control" asp-for="Cuenta.TipoSaldo" asp-items="Model.TiposSaldo"></select>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <label>Cuenta padre</label>
+                    <select class="form-control" asp-for="Cuenta.IdCuentaPadre" asp-items="Model.Padres"></select>
+                    <small class="text-muted">Si selecciona padre, esa cuenta dejará de aceptar movimiento.</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <div class="custom-control custom-switch mt-4">
+                        <input type="checkbox" class="custom-control-input" id="swActivo" asp-for="Cuenta.Activo">
+                        <label class="custom-control-label" for="swActivo">Activa</label>
+                    </div>
+                </div>
+
+                <div class="form-group col-md-4">
+                    <div class="custom-control custom-switch mt-4">
+                        <input type="checkbox" class="custom-control-input" id="swMov" asp-for="Cuenta.AceptaMovimiento">
+                        <label class="custom-control-label" for="swMov">Acepta movimiento</label>
+                    </div>
+                    <small class="text-muted">Si esta cuenta tiene hijas, el sistema lo desactivará automáticamente.</small>
+                </div>
+            </div>
+
+            <hr />
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar cambios
+            </button>
+
+            <a asp-page="Index" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

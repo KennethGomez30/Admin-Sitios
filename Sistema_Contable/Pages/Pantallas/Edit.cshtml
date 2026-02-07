@@ -4,49 +4,98 @@
     ViewData["Title"] = "Editar Pantalla";
 }
 
-<h3 class="mb-3">Editar Pantalla</h3>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-desktop text-primary"></i> Editar Pantalla
+    </h1>
+    <a asp-page="./Index" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Volver al Listado
+    </a>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
 {
-    <div class="alert alert-danger">@Model.ErrorMessage</div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
 }
 
-<form method="post">
-    @Html.AntiForgeryToken()
-    <input type="hidden" asp-for="Pantalla.pantalla_id" />
-
-    <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        <input asp-for="Pantalla.nombre" class="form-control" />
-        <span asp-validation-for="Pantalla.nombre" class="text-danger"></span>
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Información de la Pantalla</h6>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Descripción</label>
-        <input asp-for="Pantalla.descripcion" class="form-control" />
-        <span asp-validation-for="Pantalla.descripcion" class="text-danger"></span>
-    </div>
+    <div class="card-body">
 
-    <div class="mb-3">
-        <label class="form-label">Ruta</label>
-        <input asp-for="Pantalla.ruta" class="form-control" />
-        <span asp-validation-for="Pantalla.ruta" class="text-danger"></span>
-    </div>
+        <div class="alert alert-light border mb-3">
+            <i class="fas fa-info-circle text-primary"></i>
+            <strong>ID:</strong> @Model.Pantalla.pantalla_id
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Estado</label>
-        <select asp-for="Pantalla.estado" class="form-select">
-            <option value="Activa">Activa</option>
-            <option value="Inactiva">Inactiva</option>
-        </select>
-        <span asp-validation-for="Pantalla.estado" class="text-danger"></span>
-    </div>
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Pantalla.pantalla_id" />
 
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Pantalla.nombre" class="font-weight-bold">
+                            Nombre <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Pantalla.nombre" class="form-control" maxlength="40" required />
+                        <span asp-validation-for="Pantalla.nombre" class="text-danger small"></span>
+                        <small class="form-text text-muted">Máximo 40 caracteres</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label asp-for="Pantalla.estado" class="font-weight-bold">
+                            Estado <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Pantalla.estado" class="form-control" required>
+                            <option value="Activa">Activa</option>
+                            <option value="Inactiva">Inactiva</option>
+                        </select>
+                        <span asp-validation-for="Pantalla.estado" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Pantalla.descripcion" class="font-weight-bold">
+                    Descripción <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Pantalla.descripcion" class="form-control" maxlength="200" required />
+                <span asp-validation-for="Pantalla.descripcion" class="text-danger small"></span>
+                <small class="form-text text-muted">Máximo 200 caracteres</small>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Pantalla.ruta" class="font-weight-bold">
+                    Ruta <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Pantalla.ruta" class="form-control" maxlength="255" required />
+                <span asp-validation-for="Pantalla.ruta" class="text-danger small"></span>
+                <small class="form-text text-muted">Ejemplo: /Pantallas/Index</small>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="form-group text-right">
+                <a asp-page="./Index" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

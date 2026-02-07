@@ -1,6 +1,18 @@
-﻿@{
-    // Obtener datos de sesión
+﻿@using Sistema_Contable.Entities
+@inject Sistema_Contable.Services.IPantallaService PantallaService
+
+@{
+    // Obtener datos de sesión (TU LÓGICA intacta)
     var usuarioNombre = Context.Session.GetString("UsuarioNombre") ?? "Usuario";
+
+    // Para menú dinámico por usuario
+    var usuarioId = Context.Session.GetString("UsuarioId");
+    IEnumerable<Pantalla> menuPantallas = Enumerable.Empty<Pantalla>();
+
+    if (!string.IsNullOrEmpty(usuarioId))
+    {
+        menuPantallas = await PantallaService.ObtenerMenuPorUsuarioAsync(usuarioId);
+    }
 }
 
 <!DOCTYPE html>
@@ -53,13 +65,30 @@
             <div class="sidebar-heading">
                 Administración
             </div>
-            
-            <li class="nav-item">
-                <a class="nav-link" href="/Pantallas/Index">
-                    <i class="fas fa-fw fa-desktop"></i>
-                    <span>Pantallas</span>
-                </a>
-            </li>
+
+            @* MENÚ DINÁMICO SEGÚN ROL *@
+            @if (menuPantallas != null && menuPantallas.Any())
+            {
+                foreach (var p in menuPantallas)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="@p.ruta">
+                            <i class="fas fa-fw fa-angle-right"></i>
+                            <span>@p.nombre</span>
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                @* Si por alguna razón no hay pantallas asignadas *@
+                <li class="nav-item">
+                    <a class="nav-link" asp-page="/Index">
+                        <i class="fas fa-fw fa-info-circle"></i>
+                        <span>Sin opciones</span>
+                    </a>
+                </li>
+            }
 
             <li class="nav-item">
                 <a class="nav-link" asp-page="/Roles/Index">

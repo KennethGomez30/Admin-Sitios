@@ -77,7 +77,7 @@ namespace Sistema_Contable.Repository
         public async Task<bool> IsAssignedAsync(ulong pantallaId)
         {
             using var db = Conn();
-            var sql = @"SELECT COUNT(*) FROM RolPantalla WHERE pantalla_id=@pantallaId";
+            var sql = @"SELECT COUNT(*) FROM rolpantalla WHERE pantalla_id=@pantallaId";
             return (await db.ExecuteScalarAsync<int>(sql, new { pantallaId })) > 0;
         }
 
@@ -86,6 +86,23 @@ namespace Sistema_Contable.Repository
             using var db = Conn();
             var sql = @"DELETE FROM pantallas WHERE pantalla_id=@pantallaId";
             return (await db.ExecuteAsync(sql, new { pantallaId })) > 0;
+        }
+
+        public async Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId)
+        {
+            using var db = Conn();
+
+            var sql = @"
+    SELECT DISTINCT p.pantalla_id, p.nombre, p.descripcion, p.ruta, p.estado
+    FROM UsuarioRoles ur
+    JOIN RolPantalla rp ON rp.IdRol = ur.RolId
+    JOIN pantallas p ON p.pantalla_id = rp.pantalla_id
+    WHERE ur.UsuarioIdentificacion = @usuarioId
+      AND p.estado = 'Activa'
+      AND p.mostrar_en_menu = 1
+    ORDER BY p.nombre;";
+
+            return await db.QueryAsync<Pantalla>(sql, new { usuarioId });
         }
     }
 }

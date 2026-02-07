@@ -77,15 +77,19 @@
                         </label>
                         <div class="input-group">
                             <input asp-for="Contrasena" type="text" class="form-control"
-                                   id="inputContrasena" readonly required />
+                                   id="inputContrasena"
+                                   placeholder="Ingrese una contraseña o autogenere una"
+                                   required />
                             <div class="input-group-append">
                                 <button type="button" class="btn btn-primary" onclick="autogenerarContrasena()">
                                     Autogenerar
                                 </button>
                             </div>
                         </div>
+                        <span asp-validation-for="Contrasena" class="text-danger small"></span>
                         <small class="form-text text-muted">
-                            Haga clic en "Autogenerar" para crear una contraseña segura
+                            Debe contener letras, números y símbolos (+-*$.), e iniciar con una letra.
+                            O haga clic en "Autogenerar" para crear una contraseña segura automáticamente.
                         </small>
                     </div>
                 </div>
@@ -114,9 +118,11 @@
                             {
                                 @foreach (var rol in Model.RolesDisponibles)
                                 {
+                                    var estaSeleccionado = Model.RolesSeleccionados != null && Model.RolesSeleccionados.Contains(rol.IdRol);
                                     <div class="custom-control custom-checkbox">
                                         <input type="checkbox" class="custom-control-input"
-                                               id="rol_@rol.IdRol" name="RolesSeleccionados" value="@rol.IdRol" />
+                                               id="rol_@rol.IdRol" name="RolesSeleccionados" value="@rol.IdRol"
+                                               @(estaSeleccionado ? "checked" : "") />
                                         <label class="custom-control-label" for="rol_@rol.IdRol">
                                             @rol.Nombre
                                         </label>
@@ -152,35 +158,35 @@
         $(document).ready(function () {
             @if (!string.IsNullOrEmpty(Model.MensajeError))
             {
-                    <text>
-                    var modalHtml = `
-                        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog">
-                            <div class="modal-dialog modal-dialog-centered" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-danger text-white">
-                                        <h5 class="modal-title">
-                                            <i class="fas fa-exclamation-triangle"></i> Error
-                                        </h5>
-                                        <button type="button" class="close text-white" data-dismiss="modal">
-                                            <span>&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        @Model.MensajeError
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Aceptar</button>
+                            <text>
+                            var modalHtml = `
+                                <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-exclamation-triangle"></i> Error
+                                                </h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                @Model.MensajeError
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-danger" data-dismiss="modal">Aceptar</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    `;
-                    $('body').append(modalHtml);
-                    $('#modalMensaje').modal('show');
-                    $('#modalMensaje').on('hidden.bs.modal', function () {
-                        $(this).remove();
-                    });
-                    </text>
+                            `;
+                            $('body').append(modalHtml);
+                            $('#modalMensaje').modal('show');
+                            $('#modalMensaje').on('hidden.bs.modal', function () {
+                                $(this).remove();
+                            });
+                            </text>
             }
         });
 

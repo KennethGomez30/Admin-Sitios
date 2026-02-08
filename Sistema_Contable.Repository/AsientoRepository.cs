@@ -31,7 +31,7 @@ namespace Sistema_Contable.Repository
                 new
                 {
                     p_asiento_id = asientoId,
-                    p_fecha_asiento = fecha,
+                    p_fecha = fecha,               // usar el nombre exacto del SP
                     p_codigo = codigo,
                     p_referencia = referencia,
                     p_usuario = usuario
@@ -39,8 +39,6 @@ namespace Sistema_Contable.Repository
                 commandType: CommandType.StoredProcedure
             );
         }
-
-
 
 
         public async Task AgregarDetalleAsync(
@@ -92,17 +90,46 @@ namespace Sistema_Contable.Repository
             using var connection = _dbConnectionFactory.CreateConnection();
 
             using var multi = await connection.QueryMultipleAsync(
-                "sp_asiento_obtener_encabezado_y_detalle",
+                "sp_asiento_obtener",
                 new { p_asiento_id = asientoId },
                 commandType: CommandType.StoredProcedure
             );
 
-            var encabezado = await multi.ReadFirstAsync<Asiento>();
-            var detalle = await multi.ReadAsync<AsientoDetalle>();
+            var encabezadoDyn = await multi.ReadFirstOrDefaultAsync<dynamic>();
+            Asiento encabezado = null;
+            if (encabezadoDyn != null)
+            {
+                encabezado = new Asiento
+                {
+                    AsientoId = encabezadoDyn.asiento_id != null ? (long)encabezadoDyn.asiento_id : 0,
+                    Consecutivo = encabezadoDyn.consecutivo != null ? (int)encabezadoDyn.consecutivo : 0,
+                    FechaAsiento = encabezadoDyn.fecha_asiento != null ? (DateTime)encabezadoDyn.fecha_asiento : DateTime.MinValue,
+                    Codigo = encabezadoDyn.codigo ?? string.Empty,
+                    Referencia = encabezadoDyn.referencia ?? string.Empty,
+                    PeriodoId = encabezadoDyn.periodo_id != null ? (long)encabezadoDyn.periodo_id : 0,
+                    EstadoCodigo = encabezadoDyn.estado_codigo ?? string.Empty,
+                    UsuarioCreacionId = encabezadoDyn.usuario_creacion_id ?? string.Empty,
+                    UsuarioModificacionId = encabezadoDyn.usuario_modificacion_id ?? string.Empty,
+                    FechaCreacion = encabezadoDyn.fecha_creacion != null ? (DateTime)encabezadoDyn.fecha_creacion : DateTime.MinValue,
+                    FechaModificacion = encabezadoDyn.fecha_modificacion != null ? (DateTime?)encabezadoDyn.fecha_modificacion : null,
+                    TotalDebito = encabezadoDyn.total_debito != null ? (decimal)encabezadoDyn.total_debito : 0,
+                    TotalCredito = encabezadoDyn.total_credito != null ? (decimal)encabezadoDyn.total_credito : 0
+                };
+            }
 
-            return (encabezado, detalle);
+            var detalleDyn = await multi.ReadAsync<dynamic>();
+            var detalleList = detalleDyn.Select(d => new AsientoDetalle
+            {
+                DetalleId = d.detalle_id != null ? (long)d.detalle_id : 0,
+                AsientoId = d.asiento_id != null ? (long)d.asiento_id : asientoId,
+                CuentaId = d.cuenta_id != null ? (int)d.cuenta_id : 0,
+                TipoMovimiento = d.tipo_movimiento ?? string.Empty,
+                Monto = d.monto != null ? (decimal)d.monto : 0,
+                Descripcion = d.descripcion ?? string.Empty
+            }).ToList();
+
+            return (encabezado, detalleList);
         }
-
 
 
         public async Task<Asiento> CrearAsientoAsync(
@@ -114,7 +141,7 @@ namespace Sistema_Contable.Repository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
 
-            var asiento = await connection.QueryFirstAsync<Asiento>(
+            var result = await connection.QueryFirstAsync<dynamic>(
                 "sp_asiento_crear",
                 new
                 {
@@ -126,9 +153,23 @@ namespace Sistema_Contable.Repository
                 commandType: CommandType.StoredProcedure
             );
 
+            var asiento = new Asiento
+            {
+                AsientoId = result.asiento_id != null ? (long)result.asiento_id : 0,
+                Consecutivo = result.consecutivo != null ? (int)result.consecutivo : 0,
+                PeriodoId = result.periodo_id != null ? (long)result.periodo_id : 0,
+                EstadoCodigo = result.estado ?? "Borrador",
+                FechaAsiento = fechaAsiento,
+                Codigo = codigo,
+                Referencia = referencia,
+                TotalDebito = 0,
+                TotalCredito = 0,
+                FechaCreacion = DateTime.UtcNow,
+                UsuarioCreacionId = usuarioCreacionId
+            };
+
             return asiento;
         }
-
 
 
         public async Task EliminarDetalleAsync(long detalleId, string usuario)
@@ -151,8 +192,8 @@ namespace Sistema_Contable.Repository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
 
-            return await connection.QueryAsync<Asiento>(
-                "sp_asiento_listar",
+            var rows = await connection.QueryAsync<dynamic>(
+                "sp_asientos_listar",
                 new
                 {
                     p_periodo_id = periodoId,
@@ -160,6 +201,20 @@ namespace Sistema_Contable.Repository
                 },
                 commandType: CommandType.StoredProcedure
             );
+
+            var list = rows.Select(r => new Asiento
+            {
+                AsientoId = r.asiento_id != null ? (long)r.asiento_id : 0,
+                Consecutivo = r.consecutivo != null ? (int)r.consecutivo : 0,
+                FechaAsiento = r.fecha_asiento != null ? (DateTime)r.fecha_asiento : DateTime.MinValue,
+                Codigo = r.codigo ?? string.Empty,
+                Referencia = r.referencia ?? string.Empty,
+                TotalDebito = r.total_debito != null ? (decimal)r.total_debito : 0,
+                TotalCredito = r.total_credito != null ? (decimal)r.total_credito : 0,
+                EstadoCodigo = r.estado_codigo ?? string.Empty
+            }).ToList();
+
+            return list;
         }
 
 
@@ -189,7 +244,5 @@ namespace Sistema_Contable.Repository
 
             return (int)result.siguiente_consecutivo;
         }
-
-
     }
 }

@@ -71,7 +71,7 @@ else
                     foreach (var d in Model.Detalles)
                     {
                         <tr>
-                            <td>@(d.CodigoCuenta ?? d.CuentaId.ToString())</td>
+                            <td>@d.CuentaId</td>
                             <td>@d.TipoMovimiento</td>
                             <td class="text-end">@d.Monto.ToString("F2")</td>
                             <td>@d.Descripcion</td>

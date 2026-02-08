@@ -34,6 +34,10 @@ builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<IPantallaRepository, PantallaRepository>();
 builder.Services.AddScoped<IPantallaService, PantallaService>();
 
+// Asientos
+builder.Services.AddScoped<IAsientoRepository, AsientoRepository>();
+builder.Services.AddScoped<IAsientoService, AsientoService>();
+
 //Registrar el filtro de autenticación
 builder.Services.AddScoped<AutenticacionFilter>();
 

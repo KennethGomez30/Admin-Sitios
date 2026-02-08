@@ -24,11 +24,14 @@ builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 // Registrar repositorios usando inyección de dependencias de usuarios y roles
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IBitacoraRepository, BitacoraRepository>();
-builder.Services.AddScoped<IRolRepository, RolRepository>(); 
+builder.Services.AddScoped<IRolRepository, RolRepository>();
+builder.Services.AddScoped<ICuentaContableRepository, CuentaContableRepository>();
+
 
 // Registrar servicios de autenticacion y roles
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
 builder.Services.AddScoped<IRolService, RolService>();
+builder.Services.AddScoped<ICuentaContableService, CuentaContableService>();
 
 // Registrar repositorios y servicios de pantallas
 builder.Services.AddScoped<IPantallaRepository, PantallaRepository>();

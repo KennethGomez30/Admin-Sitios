@@ -21,24 +21,28 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Registrar DbConnectionFactory como Singleton
 builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
-// Registrar repositorios usando inyección de dependencias
+// Registrar repositorios usando inyección de dependencias de usuarios y roles
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IBitacoraRepository, BitacoraRepository>();
-builder.Services.AddScoped<IRolRepository, RolRepository>(); 
+builder.Services.AddScoped<IRolRepository, RolRepository>();
+builder.Services.AddScoped<ICuentaContableRepository, CuentaContableRepository>();
 
-// Registrar servicios
+
+// Registrar servicios de autenticacion y roles
 builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
 builder.Services.AddScoped<IRolService, RolService>();
+builder.Services.AddScoped<ICuentaContableService, CuentaContableService>();
 
 // Registrar repositorios y servicios de pantallas
 builder.Services.AddScoped<IPantallaRepository, PantallaRepository>();
 builder.Services.AddScoped<IPantallaService, PantallaService>();
 
-
+// Registrar repositorios y servicios de cierre contable
+builder.Services.AddScoped<Sistema_Contable.Repository.ICierreContableRepository, Sistema_Contable.Repository.CierreContableRepository>();
+builder.Services.AddScoped<Sistema_Contable.Services.ICierreContableService, Sistema_Contable.Services.CierreContableService>();
 
 //Registrar el filtro de autenticación
 builder.Services.AddScoped<AutenticacionFilter>();
-
 
 // Configurar sesión - ADM4: 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();

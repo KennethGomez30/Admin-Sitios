@@ -1,0 +1,138 @@
+﻿@page
+@model Sistema_Contable.Pages.CierreContable.IndexModel
+@{
+    ViewData["Title"] = "Cierre Contable";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-balance-scale text-primary"></i> Cierre Contable (ADM14)
+    </h1>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.MensajeExito))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle"></i> @Model.MensajeExito
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    </div>
+}
+@if (!string.IsNullOrWhiteSpace(Model.MensajeError))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @Model.MensajeError
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <h6 class="m-0 font-weight-bold text-primary">Ejecutar cierre mensual</h6>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="Ejecutar">
+            @Html.AntiForgeryToken()
+
+            <div class="form-row align-items-end">
+                <div class="col-md-6 mb-3">
+                    <label class="font-weight-bold">Periodo (Año/Mes) <span class="text-danger">*</span></label>
+                    <select class="form-control" asp-for="PeriodoId" required>
+                        <option value="">-- Seleccione --</option>
+                        @foreach (var p in Model.Periodos)
+                        {
+                            <option value="@p.periodo_id">
+                                @p.anio / @p.mes (@p.estado)
+                            </option>
+                        }
+                    </select>
+                    <small class="form-text text-muted">
+                        Seleccione el periodo que desea cerrar (solo permitirá cerrar si no hay anteriores abiertos).
+                    </small>
+                </div>
+
+                <div class="col-md-6 mb-3 text-right">
+                    <button type="submit" class="btn btn-primary shadow-sm">
+                        <i class="fas fa-play"></i> Ejecutar Cierre
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Resultado != null)
+        {
+            <hr class="my-4" />
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <div>
+                    <h5 class="mb-1">
+                        Resultado del cierre: <strong>@Model.Resultado.Anio / @Model.Resultado.Mes</strong>
+                    </h5>
+                    <small class="text-muted">Demostración de igualdad Debe vs Haber según naturaleza.</small>
+                </div>
+
+                <div class="mt-2 mt-md-0">
+                    @if (Model.Resultado.Balanceado)
+                    {
+                        <span class="badge badge-success p-2">
+                            <i class="fas fa-check"></i> Balanceado
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-danger p-2">
+                            <i class="fas fa-times"></i> No balanceado
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="alert alert-light border mb-0">
+                        <strong>Debe:</strong> @Model.Resultado.TotalDebe.ToString("0.00")
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-light border mb-0">
+                        <strong>Haber:</strong> @Model.Resultado.TotalHaber.ToString("0.00")
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Cuenta</th>
+                            <th>Naturaleza</th>
+                            <th class="text-right">Saldo Anterior</th>
+                            <th class="text-right">Mov. Debe</th>
+                            <th class="text-right">Mov. Haber</th>
+                            <th class="text-right">Saldo Nuevo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var l in Model.Resultado.Lineas)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="badge badge-primary">@l.CodigoCuenta</span>
+                                    <span class="ml-2">@l.NombreCuenta</span>
+                                </td>
+                                <td>
+                                    <span class="badge @(l.TipoSaldo == "deudor" ? "badge-info" : "badge-warning")">
+                                        @l.TipoSaldo
+                                    </span>
+                                </td>
+                                <td class="text-right">@l.SaldoAnterior.ToString("0.00")</td>
+                                <td class="text-right">@l.MovDebe.ToString("0.00")</td>
+                                <td class="text-right">@l.MovHaber.ToString("0.00")</td>
+                                <td class="text-right font-weight-bold">@l.SaldoNuevo.ToString("0.00")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

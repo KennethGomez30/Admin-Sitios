@@ -26,32 +26,32 @@ public class IndexModel : PageModel
     public int Total { get; set; }
     public int TotalPages => (int)Math.Ceiling((double)Total / PageSize);
 
-    [TempData] public string? SuccessMessage { get; set; }
+    [TempData]
+    public string? SuccessMessage { get; set; }
+
+    [TempData]
     public string? ErrorMessage { get; set; }
 
     public async Task OnGetAsync()
     {
         var usuarioBitacora = HttpContext.Session.GetString("UsuarioId");
-
         var (items, total) = await _service.ListarAsync(Estado, Page, PageSize, usuarioBitacora);
         Items = items;
         Total = total;
     }
-    
+
     public async Task<IActionResult> OnPostEliminarAsync(int id)
     {
         var usuario = HttpContext.Session.GetString("UsuarioId") ?? "N/A";
-
         var (ok, msg) = await _service.EliminarAsync(id, usuario);
+
         if (!ok)
         {
             ErrorMessage = msg;
-            await OnGetAsync();
-            return Page();
+            return RedirectToPage("./Index", new { Estado, Page });
         }
 
         SuccessMessage = msg;
-        return RedirectToPage("./Index",new { Estado, Page });
+        return RedirectToPage("./Index", new { Estado, Page });
     }
-
 }

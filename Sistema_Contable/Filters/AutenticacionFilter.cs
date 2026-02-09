@@ -16,7 +16,6 @@ namespace Sistema_Contable.Filters
         public async Task OnPageHandlerExecutionAsync(PageHandlerExecutingContext context, PageHandlerExecutionDelegate next)
         {
             var pagina = context.ActionDescriptor.RelativePath ?? "";
-
             var rutaActual = NormalizarRuta(pagina);
 
             if (rutaActual.Equals("/Login", StringComparison.OrdinalIgnoreCase) ||
@@ -29,11 +28,9 @@ namespace Sistema_Contable.Filters
 
             var usuarioId = context.HttpContext.Session.GetString("UsuarioId");
 
-            // Validar inactividad de sesión (PRUEBAS)
-            // const int SEGUNDOS_INACTIVIDAD = 10;
-            //segundosInactivos
-            const int MINUTOS_INACTIVIDAD = 5;
-            //segundosInactivos
+            // PRUEBAS: expirar en 10 segundos de inactividad
+            const int minutos_INACTIVIDAD = 5;
+
             if (!string.IsNullOrEmpty(usuarioId))
             {
                 var ultimoAccesoStr = context.HttpContext.Session.GetString("UltimoAccesoUtc");
@@ -46,28 +43,28 @@ namespace Sistema_Contable.Filters
                         System.Globalization.DateTimeStyles.RoundtripKind,
                         out var ultimoAccesoUtc))
                 {
-                    var minutosInactivo = (DateTime.UtcNow - ultimoAccesoUtc).TotalMinutes;
+                    var minutosInactivos = (DateTime.UtcNow - ultimoAccesoUtc).TotalMinutes;
 
-                    if (minutosInactivo >= MINUTOS_INACTIVIDAD)
+                    if (minutosInactivos >= minutos_INACTIVIDAD)
                     {
-                        context.HttpContext.Session.Clear();
-                        context.HttpContext.Session.SetString(
-                            "MensajeRedireccion",
-                            "La sesión ha expirado."
-                        );
+                        
+                        context.HttpContext.Session.SetString("MensajeRedireccion", "La sesión ha expirado.");
+
+                        // (si no Login te manda a Index y no ves el mensaje)
+                        context.HttpContext.Session.Remove("UsuarioId");
+                        context.HttpContext.Session.Remove("UsuarioNombre");
+                        context.HttpContext.Session.Remove("UsuarioCorreo");
+                        context.HttpContext.Session.Remove("UltimoAccesoUtc");
 
                         context.Result = new RedirectToPageResult("/Login");
                         return;
                     }
                 }
 
-                // Actualizar último acceso (FORMATO SEGURO)
-                context.HttpContext.Session.SetString(
-                    "UltimoAccesoUtc",
-                    DateTime.UtcNow.ToString("O")
-                );
+                context.HttpContext.Session.SetString("UltimoAccesoUtc", DateTime.UtcNow.ToString("O"));
             }
 
+            usuarioId = context.HttpContext.Session.GetString("UsuarioId");
 
             if (string.IsNullOrEmpty(usuarioId))
             {
@@ -98,6 +95,7 @@ namespace Sistema_Contable.Filters
             await next();
         }
 
+        //
         public Task OnPageHandlerSelectionAsync(PageHandlerSelectedContext context) => Task.CompletedTask;
 
         private static string NormalizarRuta(string relativePath)

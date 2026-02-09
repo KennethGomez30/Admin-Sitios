@@ -67,7 +67,7 @@ namespace Sistema_Contable.Pages.Asientos
             Detalles = result.Detalle.Select(d => new DetalleEditDto
             {
                 DetalleId = d.DetalleId,
-                CuentaId = d.CuentaId,
+                CuentaId = d.CuentaId ?? 0,
                 TipoMovimiento = d.TipoMovimiento,
                 Monto = d.Monto,
                 Descripcion = d.Descripcion

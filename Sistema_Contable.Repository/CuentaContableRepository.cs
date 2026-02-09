@@ -193,8 +193,7 @@ public class CuentaContableRepository : ICuentaContableRepository
     {
         using var connection = _dbConnectionFactory.CreateConnection();
 
-        // Ajustá si tu columna/tabla tiene otro nombre.
-        // Lo normal en tu proyecto: asiento_detalle.id_cuenta (o cuenta_id).
+        // asiento_detalle.id_cuenta (o cuenta_id).
         var sql = "SELECT COUNT(1) FROM asiento_detalle WHERE cuenta_id = @Id;";
         var count = await connection.ExecuteScalarAsync<int>(sql, new { Id = idCuenta });
 

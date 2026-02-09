@@ -25,33 +25,16 @@ namespace Sistema_Contable.Pages
         // Solo usar propiedad normal
         public string? MensajeInfo { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            // Si ya existe sesión activa, redirigir a Index
             var usuarioIdActual = HttpContext.Session.GetString("UsuarioId");
             if (!string.IsNullOrEmpty(usuarioIdActual))
-            {
-                Response.Redirect("/Index");
-                return;
-            }
-            /*
-            // Leer mensaje ANTES de limpiar
-            var mensajeRedireccion = HttpContext.Session.GetString("MensajeRedireccion");
+                return RedirectToPage("/Index");
 
-            // Limpiar TODA la sesión
-            HttpContext.Session.Clear();
-
-            // Solo mostrar mensaje si existía
-            if (!string.IsNullOrEmpty(mensajeRedireccion))
-            {
-                MensajeInfo = mensajeRedireccion;
-            }*/
-
-            // Leer mensaje de redirección
             MensajeInfo = HttpContext.Session.GetString("MensajeRedireccion");
-
-            // Eliminar SOLO el mensaje
             HttpContext.Session.Remove("MensajeRedireccion");
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()

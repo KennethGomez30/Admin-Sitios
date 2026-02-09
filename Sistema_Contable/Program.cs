@@ -41,7 +41,7 @@ builder.Services.AddScoped<IPantallaService, PantallaService>();
 builder.Services.AddScoped<AutenticacionFilter>();
 
 
-// Configurar sesión - ADM4: 5 minutos de timeout
+// 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

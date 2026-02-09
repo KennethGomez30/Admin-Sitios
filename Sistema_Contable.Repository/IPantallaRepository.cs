@@ -12,7 +12,7 @@ namespace Sistema_Contable.Repository
         Task<bool> UpdateAsync(Pantalla p);
         Task<bool> IsAssignedAsync(ulong pantallaId);
         Task<bool> DeleteAsync(ulong pantallaId);
-        Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId);
+        Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId, string seccion);
 
     }
 }

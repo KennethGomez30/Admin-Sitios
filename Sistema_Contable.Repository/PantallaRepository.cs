@@ -88,21 +88,23 @@ namespace Sistema_Contable.Repository
             return (await db.ExecuteAsync(sql, new { pantallaId })) > 0;
         }
 
-        public async Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId)
+        public async Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId, string seccion)
         {
             using var db = Conn();
 
             var sql = @"
-    SELECT DISTINCT p.pantalla_id, p.nombre, p.descripcion, p.ruta, p.estado
-    FROM UsuarioRoles ur
-    JOIN RolPantalla rp ON rp.IdRol = ur.RolId
-    JOIN pantallas p ON p.pantalla_id = rp.pantalla_id
-    WHERE ur.UsuarioIdentificacion = @usuarioId
-      AND p.estado = 'Activa'
-      AND p.mostrar_en_menu = 1
-    ORDER BY p.nombre;";
+        SELECT DISTINCT p.pantalla_id, p.nombre, p.descripcion, p.ruta, p.estado
+        FROM UsuarioRoles ur
+        JOIN RolPantalla rp ON rp.IdRol = ur.RolId
+        JOIN pantallas p ON p.pantalla_id = rp.pantalla_id
+        WHERE ur.UsuarioIdentificacion = @usuarioId
+          AND p.estado = 'Activa'
+          AND p.mostrar_en_menu = 1
+          AND p.menu_seccion = @seccion
+        ORDER BY p.pantalla_id;
+    ";
 
-            return await db.QueryAsync<Pantalla>(sql, new { usuarioId });
+            return await db.QueryAsync<Pantalla>(sql, new { usuarioId, seccion });
         }
     }
 }

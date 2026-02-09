@@ -44,7 +44,8 @@ builder.Services.AddScoped<Sistema_Contable.Services.ICierreContableService, Sis
 //Registrar el filtro de autenticación
 builder.Services.AddScoped<AutenticacionFilter>();
 
-// Configurar sesión - ADM4: 5 minutos de timeout
+
+// 5 minutos de timeout
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

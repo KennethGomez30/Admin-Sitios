@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Data;
+﻿using System.Data;
 using Dapper;
 using Sistema_Contable.Entities;
 
@@ -40,6 +37,23 @@ namespace Sistema_Contable.Repository
             );
         }
 
+
+        public async Task AnularOEliminarAsync(long asientoId, string usuario)
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            var parameters = new
+            {
+                p_asiento_id = asientoId,
+                p_usuario = usuario
+            };
+
+            await connection.ExecuteAsync(
+                "sp_anular_o_eliminar_asiento",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+        }
 
         public async Task AgregarDetalleAsync(
             long asientoId,
@@ -131,7 +145,6 @@ namespace Sistema_Contable.Repository
             return (encabezado, detalleList);
         }
 
-
         public async Task<Asiento> CrearAsientoAsync(
             DateTime fechaAsiento,
             string codigo,
@@ -141,7 +154,7 @@ namespace Sistema_Contable.Repository
         {
             using var connection = _dbConnectionFactory.CreateConnection();
 
-            var result = await connection.QueryFirstAsync<dynamic>(
+            var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
                 "sp_asiento_crear",
                 new
                 {
@@ -153,12 +166,31 @@ namespace Sistema_Contable.Repository
                 commandType: CommandType.StoredProcedure
             );
 
+            if (result == null)
+                throw new Exception("El SP sp_asiento_crear no devolvió resultado.");
+
+            // Support distintos alias (asiento_id / asientoId) defensivamente
+            long asientoId = 0;
+            try
+            {
+                asientoId = result.asiento_id != null ? (long)result.asiento_id
+                         : result.asientoId != null ? (long)result.asientoId
+                         : 0;
+            }
+            catch
+            {
+                asientoId = Convert.ToInt64(result.asiento_id ?? result.asientoId ?? 0);
+            }
+
+            if (asientoId <= 0)
+                throw new Exception("El SP sp_asiento_crear devolvió AsientoId inválido.");
+
             var asiento = new Asiento
             {
-                AsientoId = result.asiento_id != null ? (long)result.asiento_id : 0,
+                AsientoId = asientoId,
                 Consecutivo = result.consecutivo != null ? (int)result.consecutivo : 0,
                 PeriodoId = result.periodo_id != null ? (long)result.periodo_id : 0,
-                EstadoCodigo = result.estado ?? "Borrador",
+                EstadoCodigo = (result.estado != null ? (string)result.estado : (result.estado_codigo != null ? (string)result.estado_codigo : string.Empty)),
                 FechaAsiento = fechaAsiento,
                 Codigo = codigo,
                 Referencia = referencia,
@@ -170,6 +202,7 @@ namespace Sistema_Contable.Repository
 
             return asiento;
         }
+
 
 
         public async Task EliminarDetalleAsync(long detalleId, string usuario)
@@ -244,5 +277,159 @@ namespace Sistema_Contable.Repository
 
             return (int)result.siguiente_consecutivo;
         }
+        public async Task<Asiento> CrearAsientoConDetallesAsync(
+        DateTime fechaAsiento,
+        string codigo,
+        string referencia,
+        string usuarioCreacionId,
+        IEnumerable<(int CuentaId, string TipoMovimiento, decimal Monto, string Descripcion)> detalles
+        )
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+            await connection.OpenAsync();
+            using var tran = connection.BeginTransaction();
+
+            try
+            {
+                // 1) Crear encabezado (ejecutar SP dentro de la misma transacción)
+                var result = await connection.QueryFirstOrDefaultAsync<dynamic>(
+                    "sp_asiento_crear",
+                    new
+                    {
+                        p_fecha_asiento = fechaAsiento,
+                        p_codigo = codigo,
+                        p_referencia = referencia,
+                        p_usuario_creacion_id = usuarioCreacionId
+                    },
+                    commandType: CommandType.StoredProcedure,
+                    transaction: tran
+                );
+
+                if (result == null)
+                    throw new Exception("sp_asiento_crear no devolvió resultado.");
+
+                long asientoId = result.asiento_id != null ? (long)result.asiento_id : Convert.ToInt64(result.asientoId ?? 0);
+                if (asientoId <= 0)
+                    throw new Exception("AsientoId inválido desde SP.");
+
+                // 2) Agregar detalles (llamar al SP de detalle dentro de la misma transacción)
+                foreach (var d in detalles)
+                {
+                    // saltar validaciones mínimas
+                    if (d.CuentaId <= 0 || d.Monto <= 0) continue;
+
+                    await connection.ExecuteAsync(
+                        "sp_asiento_detalle_agregar",
+                        new
+                        {
+                            p_asiento_id = asientoId,
+                            p_cuenta_id = d.CuentaId,
+                            p_tipo_movimiento = d.TipoMovimiento,
+                            p_monto = d.Monto,
+                            p_descripcion = d.Descripcion,
+                            p_usuario = usuarioCreacionId
+                        },
+                        commandType: CommandType.StoredProcedure,
+                        transaction: tran
+                    );
+                }
+
+                // 3) commit
+                tran.Commit();
+
+                // 4) devolver objeto Asiento (puedes volver a consultar encabezado si quieres campos actualizados)
+                var asiento = new Asiento
+                {
+                    AsientoId = asientoId,
+                    FechaAsiento = fechaAsiento,
+                    Codigo = codigo,
+                    Referencia = referencia,
+                    UsuarioCreacionId = usuarioCreacionId,
+                    // opcionales: leer Totales desde la BD o dejarlos en 0 y que quien llame vuelva a consultarlos
+                };
+
+                return asiento;
+            }
+            catch
+            {
+                try { tran.Rollback(); } catch { }
+                throw;
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+
+
+        public async Task<IEnumerable<PeriodoContable>> ListarPeriodosAsync(int? anio, int? mes)
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            var rows = await connection.QueryAsync<dynamic>(
+                "sp_Asiento_periodos_listar",
+                new { p_anio = anio, p_mes = mes },
+                commandType: CommandType.StoredProcedure
+            );
+
+            var list = new List<PeriodoContable>();
+
+            foreach (var r in rows)
+            {
+                bool activoFlag = false;
+                if (r.activo is bool b) activoFlag = b;
+                else if (r.activo is int i) activoFlag = i == 1;
+                else if (r.activo != null)
+                {
+                    // intento defensivo
+                    var s = r.activo.ToString();
+                    activoFlag = s == "1" || s.Equals("true", StringComparison.OrdinalIgnoreCase);
+                }
+
+                list.Add(new PeriodoContable
+                {
+                    PeriodoId = r.periodo_id != null ? (long)r.periodo_id : 0L,
+                    Anio = r.anio != null ? (int)r.anio : 0,
+                    Mes = r.mes != null ? (int)r.mes : 0,
+                    Estado = r.estado ?? string.Empty,
+                    Activo = activoFlag
+                });
+            }
+
+            return list;
+        }
+
+
+        public async Task ActualizarDetalleAsync(
+            long detalleId,
+            int cuentaId,
+            string tipoMovimiento,
+            decimal monto,
+            string descripcion,
+            string usuario
+        )
+        {
+            using var connection = _dbConnectionFactory.CreateConnection();
+
+            await connection.ExecuteAsync(
+                "sp_asiento_detalle_actualizar",
+                new
+                {
+                    p_detalle_id = detalleId,
+                    p_cuenta_id = cuentaId,
+                    p_tipo_movimiento = tipoMovimiento,
+                    p_monto = monto,
+                    p_descripcion = descripcion,
+                    p_usuario = usuario
+                },
+                commandType: CommandType.StoredProcedure
+            );
+        }
+
+
+
     }
+
+
 }

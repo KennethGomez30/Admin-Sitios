@@ -1,46 +1,39 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Sistema_Contable.Entities;
 using Sistema_Contable.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace Sistema_Contable.Pages.Asientos
 {
     public class CreateModel : PageModel
     {
         private readonly IAsientoService _asientoService;
+        private readonly ICuentaService _cuentaService;
 
-        public CreateModel(IAsientoService asientoService)
+        public CreateModel(
+            IAsientoService asientoService,
+            ICuentaService cuentaService)
         {
             _asientoService = asientoService;
+            _cuentaService = cuentaService;
         }
-
-        [BindProperty]
-        public CreateAsientoDto Asiento { get; set; } = new CreateAsientoDto();
-
-        [BindProperty]
-        public List<DetalleDto> Detalles { get; set; } = new List<DetalleDto>();
-
-        // Lista de cuentas para el select. Poblarla desde tu repo (aqu� se deja placeholder).
-        public List<SelectListItem> Cuentas { get; set; } = new List<SelectListItem>();
 
         public string? ErrorMessage { get; set; }
 
-        public void OnGet()
+        [BindProperty]
+        public CreateAsientoDto Asiento { get; set; } = new();
+
+        [BindProperty]
+        public List<DetalleDto> Detalles { get; set; } = new();
+
+        public List<SelectListItem> Cuentas { get; set; } = new();
+
+        public async Task OnGetAsync()
         {
-            // TODO: Cargar cuentas reales desde repositorio. Ejemplo:
-            // Cuentas = _cuentaRepository.Listar().Select(c => new SelectListItem(c.Nombre, c.Id.ToString())).ToList();
+            await CargarCuentasAsync();
 
-            // Placeholder (remplazar por llamada a repo)
-            Cuentas = new List<SelectListItem>
-            {
-                new SelectListItem("1000 - Caja", "1000"),
-                new SelectListItem("2000 - Bancos", "2000"),
-                new SelectListItem("3000 - Ventas", "3000")
-            };
-
-            // Inicializa una l�nea vac�a para UX
             if (!Detalles.Any())
             {
                 Detalles.Add(new DetalleDto { TipoMovimiento = "deudor" });
@@ -49,53 +42,83 @@ namespace Sistema_Contable.Pages.Asientos
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // 🔹 LIMPIAR FILAS VACÍAS (PASO 3)
+            Detalles = Detalles
+                .Where(d => d.CuentaId.HasValue && d.Monto > 0)
+                .ToList();
+
+            if (!Detalles.Any())
+            {
+                ModelState.AddModelError("", "Debe agregar al menos una línea válida.");
+            }
+
             if (!ModelState.IsValid)
             {
-                // recargar cuentas si hubo error para que el select no quede vac�o
-                OnGet();
+                await CargarCuentasAsync();
+                return Page();
+            }
+
+            // 1️⃣ USUARIO DESDE SESIÓN (igual que tus compañeros)
+            var usuario = HttpContext.Session.GetString("UsuarioId");
+
+            if (string.IsNullOrWhiteSpace(usuario))
+            {
+                ErrorMessage = "No se pudo obtener el usuario en sesión. Inicie sesión nuevamente.";
+                await CargarCuentasAsync();
                 return Page();
             }
 
             try
             {
-                // usuario actual (ajusta seg�n tu autenticaci�n)
-                var usuario = User?.Identity?.Name ?? "system";
-
-                // 1) Crear encabezado (SP crea consecutivo y periodo activo)
+                // 2️⃣ CREAR ASIENTO
                 var creado = await _asientoService.CrearAsientoAsync(
                     Asiento.FechaAsiento,
-                    Asiento.Codigo ?? string.Empty,
+                    Asiento.Codigo,
                     Asiento.Referencia ?? string.Empty,
                     usuario
                 );
 
-                // 2) Agregar detalles si hay
-                if (Detalles != null && Detalles.Any())
+                if (creado == null || creado.AsientoId <= 0)
                 {
-                    foreach (var d in Detalles)
-                    {
-                        // validar montos y cuenta
-                        if (d.CuentaId == 0 || d.Monto <= 0) continue;
-
-                        await _asientoService.AgregarDetalleAsync(
-                            creado.AsientoId,
-                            d.CuentaId,
-                            d.TipoMovimiento ?? "deudor",
-                            d.Monto,
-                            d.Descripcion ?? string.Empty,
-                            usuario
-                        );
-                    }
+                    ErrorMessage = "No se pudo crear el asiento.";
+                    await CargarCuentasAsync();
+                    return Page();
                 }
 
-                return RedirectToPage("Index");
+                // 3️⃣ DETALLES (YA LIMPIOS)
+                foreach (var d in Detalles)
+                {
+                    await _asientoService.AgregarDetalleAsync(
+                        creado.AsientoId,
+                        d.CuentaId!.Value,
+                        d.TipoMovimiento,
+                        d.Monto,
+                        d.Descripcion ?? string.Empty,
+                        usuario
+                    );
+                }
+
+                TempData["SuccessMessage"] = "Asiento creado correctamente.";
+                return RedirectToPage("./Index");
             }
             catch (Exception ex)
             {
-                // Si quieres mostrar detalle en la p�gina de error
-                TempData["MensajeError"] = ex.Message;
-                return RedirectToPage("/Error");
+                ErrorMessage = ex.InnerException?.Message ?? ex.Message;
+                await CargarCuentasAsync();
+                return Page();
             }
+        }
+
+        private async Task CargarCuentasAsync()
+        {
+            var cuentas = await _cuentaService.ObtenerCuentasMovimientoAsync();
+
+            Cuentas = cuentas
+                .Select(c => new SelectListItem(
+                    $"{c.Codigo} - {c.Nombre}",
+                    c.CuentaId.ToString()
+                ))
+                .ToList();
         }
 
         public class CreateAsientoDto
@@ -107,15 +130,15 @@ namespace Sistema_Contable.Pages.Asientos
             [Required]
             public string Codigo { get; set; } = string.Empty;
 
-            public string Referencia { get; set; } = string.Empty;
+            public string? Referencia { get; set; }
         }
 
         public class DetalleDto
         {
-            public int CuentaId { get; set; }
+            public int? CuentaId { get; set; }   // 🔹 AHORA OPCIONAL
             public string TipoMovimiento { get; set; } = "deudor";
             public decimal Monto { get; set; }
-            public string Descripcion { get; set; } = string.Empty;
+            public string? Descripcion { get; set; }
         }
     }
 }

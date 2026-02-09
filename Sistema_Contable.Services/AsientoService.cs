@@ -12,6 +12,11 @@ namespace Sistema_Contable.Services
             _asientoRepository = asientoRepository;
         }
 
+        public async Task AnularOEliminarAsync(long asientoId, string usuario)
+        {
+            await _asientoRepository.AnularOEliminarAsync(asientoId, usuario);
+        }
+
         public async Task<IEnumerable<Asiento>> ListarAsientosAsync(long? periodoId, string? estadoCodigo)
         {
             if (!periodoId.HasValue)
@@ -35,12 +40,12 @@ namespace Sistema_Contable.Services
             string usuarioCreacionId
         )
         {
-            return await _asientoRepository.CrearAsientoAsync(
-                fechaAsiento,
-                codigo,
-                referencia,
-                usuarioCreacionId
-            );
+            var creado = await _asientoRepository.CrearAsientoAsync(fechaAsiento, codigo, referencia, usuarioCreacionId);
+
+            if (creado == null || creado.AsientoId <= 0)
+                throw new Exception("No se pudo crear el asiento (AsientoId inválido).");
+
+            return creado;
         }
 
         public async Task AgregarDetalleAsync(
@@ -60,6 +65,11 @@ namespace Sistema_Contable.Services
                 descripcion,
                 usuario
             );
+        }
+
+        public async Task ActualizarDetalleAsync(long detalleId, int cuentaId, string tipoMovimiento, decimal monto, string descripcion, string usuario)
+        {
+            await _asientoRepository.ActualizarDetalleAsync(detalleId, cuentaId, tipoMovimiento, monto, descripcion, usuario);
         }
 
         public async Task EliminarDetalleAsync(long detalleId, string usuario)
@@ -88,5 +98,12 @@ namespace Sistema_Contable.Services
         {
             await _asientoRepository.AnularAsientoAsync(asientoId, usuario);
         }
+
+        public async Task<IEnumerable<PeriodoContable>> ListarPeriodosAsync(int? anio, int? mes)
+        {
+            return await _asientoRepository.ListarPeriodosAsync(anio, mes);
+        }
+
+        
     }
 }

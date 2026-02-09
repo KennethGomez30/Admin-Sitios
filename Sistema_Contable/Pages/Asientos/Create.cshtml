@@ -4,107 +4,134 @@
     ViewData["Title"] = "Nuevo Asiento";
 }
 
-<h3 class="mb-3">Nuevo Asiento</h3>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-file-invoice-dollar text-primary"></i> Nuevo Asiento
+    </h1>
+    <a asp-page="Index" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Atrás
+    </a>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
 {
     <div class="alert alert-danger">@Model.ErrorMessage</div>
 }
 
-<form method="post">
-    @Html.AntiForgeryToken()
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-3">
-            <label class="form-label">Fecha</label>
-            <input asp-for="Asiento.FechaAsiento" class="form-control" type="date" />
-            <span asp-validation-for="Asiento.FechaAsiento" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Código</label>
-            <input asp-for="Asiento.Codigo" class="form-control" />
-            <span asp-validation-for="Asiento.Codigo" class="text-danger"></span>
-        </div>
-
-        <div class="col-md-6">
-            <label class="form-label">Referencia</label>
-            <input asp-for="Asiento.Referencia" class="form-control" />
-            <span asp-validation-for="Asiento.Referencia" class="text-danger"></span>
-        </div>
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Datos del Asiento</h6>
     </div>
+    <div class="card-body">
 
-    <hr />
+        <form method="post">
+            @Html.AntiForgeryToken()
 
-    <h5 class="mb-2">Detalle del asiento</h5>
+            <!-- DATOS GENERALES -->
+            <div class="form-row mb-3">
+                <div class="form-group col-md-3">
+                    <label class="font-weight-bold">Fecha</label>
+                    <input asp-for="Asiento.FechaAsiento" type="date" class="form-control" />
+                    <span asp-validation-for="Asiento.FechaAsiento" class="text-danger"></span>
+                </div>
 
-    <div class="table-responsive mb-2">
-        <table class="table table-sm align-middle" id="detalle-table">
-            <thead>
-                <tr>
-                    <th style="width:30%;">Cuenta</th>
-                    <th style="width:15%;">Movimiento</th>
-                    <th style="width:15%;">Monto</th>
-                    <th>Descripción</th>
-                    <th style="width:90px;"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="detalle-row">
-                    <td>
-                        <select name="Detalles[0].CuentaId" class="form-select form-select-sm">
-                            <option value="">-- Seleccione --</option>
-                            @foreach (var c in Model.Cuentas)
-                            {
-                                <option value="@c.Value">@c.Text</option>
-                            }
-                        </select>
-                    </td>
-                    <td>
-                        <select name="Detalles[0].TipoMovimiento" class="form-select form-select-sm">
-                            <option value="deudor">Deudor</option>
-                            <option value="acreedor">Acreedor</option>
-                        </select>
-                    </td>
-                    <td>
-                        <input name="Detalles[0].Monto" class="form-control form-control-sm" />
-                    </td>
-                    <td>
-                        <input name="Detalles[0].Descripcion" class="form-control form-control-sm" />
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-danger btn-remove">Eliminar</button>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                <div class="form-group col-md-3">
+                    <label class="font-weight-bold">Código</label>
+                    <input asp-for="Asiento.Codigo" class="form-control" />
+                    <span asp-validation-for="Asiento.Codigo" class="text-danger"></span>
+                </div>
 
-    <div class="d-flex gap-2 mb-3">
-        <button type="button" id="btn-add-line" class="btn btn-outline-secondary btn-sm">Agregar línea</button>
-    </div>
-
-    <div class="mb-3">
-        <div class="d-flex gap-3 align-items-center">
-            <div>
-                <label class="form-label mb-0">Total Débito</label>
-                <div class="fw-bold" id="total-debito">0.00</div>
+                <div class="form-group col-md-6">
+                    <label class="font-weight-bold">Referencia</label>
+                    <input asp-for="Asiento.Referencia" class="form-control" />
+                    <span asp-validation-for="Asiento.Referencia" class="text-danger"></span>
+                </div>
             </div>
-            <div>
-                <label class="form-label mb-0">Total Crédito</label>
-                <div class="fw-bold" id="total-credito">0.00</div>
-            </div>
-            <div class="ms-3">
-                <span id="balance-indicator" class="badge bg-secondary">No balanceado</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <a asp-page="Index" class="btn btn-secondary">Regresar</a>
+            <hr />
+
+            <!-- DETALLE -->
+            <h6 class="font-weight-bold text-primary mb-2">
+                <i class="fas fa-list"></i> Detalle del Asiento
+            </h6>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered table-sm align-middle" id="detalle-table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:30%;">Cuenta</th>
+                            <th style="width:15%;">Movimiento</th>
+                            <th style="width:15%;">Monto</th>
+                            <th>Descripción</th>
+                            <th style="width:90px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="detalle-row">
+                            <td>
+                                <select name="Detalles[0].CuentaId" class="form-control form-control-sm">
+                                    <option value="">-- Seleccione --</option>
+                                    @foreach (var c in Model.Cuentas)
+                                    {
+                                        <option value="@c.Value">@c.Text</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <select name="Detalles[0].TipoMovimiento" class="form-control form-control-sm">
+                                    <option value="deudor">Deudor</option>
+                                    <option value="acreedor">Acreedor</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input name="Detalles[0].Monto" class="form-control form-control-sm" />
+                            </td>
+                            <td>
+                                <input name="Detalles[0].Descripcion" class="form-control form-control-sm" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" id="btn-add-line" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="fas fa-plus"></i> Agregar línea
+            </button>
+
+            <!-- TOTALES -->
+            <div class="border rounded p-3 mb-3 bg-light">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="font-weight-bold mb-0">Total Débito</label>
+                        <div class="fw-bold" id="total-debito">0.00</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="font-weight-bold mb-0">Total Crédito</label>
+                        <div class="fw-bold" id="total-credito">0.00</div>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <span id="balance-indicator" class="badge bg-secondary">No balanceado</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCIONES -->
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a asp-page="Index" class="btn btn-secondary">
+                Cancelar
+            </a>
+        </form>
     </div>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -159,7 +186,7 @@
             });
 
             table.addEventListener('click', e => {
-                if (e.target.classList.contains('btn-remove')) {
+                if (e.target.closest('.btn-remove')) {
                     e.target.closest('tr').remove();
                     reindex();
                     recalcTotals();
@@ -169,5 +196,4 @@
             table.addEventListener('input', recalcTotals);
         })();
     </script>
-
 }

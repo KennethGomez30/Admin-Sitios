@@ -2,77 +2,204 @@
 @model Sistema_Contable.Pages.Asientos.IndexModel
 @{
     ViewData["Title"] = "Asientos Contables";
+
+    bool periodoActivo = Model.Periodos
+        .Any(p => p.PeriodoId == Model.PeriodoFiltroId && p.Activo);
 }
 
-<h3 class="mb-3">Asientos Contables</h3>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-file-invoice-dollar text-primary"></i> Asientos Contables
+    </h1>
+    <a asp-page="Create" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Nuevo Asiento
+    </a>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
 {
     <div class="alert alert-danger">@Model.ErrorMessage</div>
 }
+@if (!string.IsNullOrWhiteSpace(Model.MensajeError))
+{
+    <div class="alert alert-danger">@Model.MensajeError</div>
+}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <form method="get" class="d-flex gap-2">
-        <select class="form-control" name="estado">
-            <option value="">-- Todos los estados --</option>
-            @foreach (var e in Model.Estados)
-            {
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Listado de Asientos</h6>
+    </div>
 
-                <option value="@e" selected="@(e == Model.EstadoFiltro)">
-                    @e
-                </option>
-            }
-        </select>
+    <div class="card-body">
 
-        <button class="btn btn-outline-primary" type="submit">Filtrar</button>
-    </form>
-
-    <a class="btn btn-primary" asp-page="Create">Nuevo Asiento</a>
-</div>
-
-<div class="table-responsive">
-    <table class="table table-striped align-middle">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Fecha</th>
-                <th>Código</th>
-                <th>Referencia</th>
-                <th>Débito</th>
-                <th>Crédito</th>
-                <th>Estado</th>
-                <th style="width:160px;">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (!Model.Asientos.Any())
-            {
-                <tr>
-                    <td colspan="8" class="text-center">No hay asientos.</td>
-                </tr>
-            }
-            else
-            {
-                foreach (var a in Model.Asientos)
+        <!-- FILTROS -->
+        <form method="get" class="form-inline mb-3 d-flex gap-2">
+            <select asp-for="PeriodoFiltroId" class="form-control">
+                <option value="">-- Periodo (Activo) --</option>
+                @foreach (var p in Model.Periodos)
                 {
-                    <tr>
-                        <td>@a.Consecutivo</td>
-                        <td>@a.FechaAsiento.ToString("yyyy-MM-dd")</td>
-                        <td>@a.Codigo</td>
-                        <td>@a.Referencia</td>
-                        <td>@a.TotalDebito.ToString("C2")</td>
-                        <td>@a.TotalCredito.ToString("C2")</td>
-                        <td>@a.EstadoCodigo</td>
-                        <td>
-                            <a class="btn btn-sm btn-outline-secondary"
-                               asp-page="Edit"
-                               asp-route-id="@a.AsientoId">
-                                Ver / Editar
-                            </a>
-                        </td>
-                    </tr>
+                    <option value="@p.PeriodoId" selected="@(p.PeriodoId == Model.PeriodoFiltroId)">
+                        @Sistema_Contable.Pages.Asientos.IndexModel.PeriodoDisplay(p)
+                    </option>
                 }
-            }
-        </tbody>
-    </table>
+            </select>
+
+            <select asp-for="EstadoFiltro" class="form-control">
+                <option value="">-- Todos los estados --</option>
+                @foreach (var e in Model.Estados)
+                {
+                    <option value="@e.Codigo" selected="@(e.Codigo == Model.EstadoFiltro)">
+                        @e.Nombre
+                    </option>
+                }
+            </select>
+
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </form>
+
+        <!-- TABLA -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha</th>
+                        <th>Código</th>
+                        <th>Referencia</th>
+                        <th class="text-end">Débito</th>
+                        <th class="text-end">Crédito</th>
+                        <th>Estado</th>
+                        <th style="width:160px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Asientos.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">
+                                No hay asientos registrados
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var a in Model.Asientos)
+                        {
+                            bool estadoEditable =
+                            a.EstadoCodigo == "EA3" || // Borrador
+                            a.EstadoCodigo == "EA4";   // Pendiente
+
+                            bool puedeAccionar = periodoActivo && estadoEditable;
+
+                            string estadoNombre = a.EstadoCodigo switch
+                            {
+                                "EA1" => "Anulado",
+                                "EA2" => "Aprobado",
+                                "EA3" => "Borrador",
+                                "EA4" => "Pendiente de aprobación",
+                                "EA5" => "Rechazado",
+                                _ => "Desconocido"
+                            };
+
+                            <tr>
+                                <td>@a.Consecutivo</td>
+                                <td>@a.FechaAsiento.ToString("yyyy-MM-dd")</td>
+                                <td>@a.Codigo</td>
+                                <td>@a.Referencia</td>
+                                <td class="text-end">@a.TotalDebito.ToString("C2")</td>
+                                <td class="text-end">@a.TotalCredito.ToString("C2")</td>
+                                <td>@estadoNombre</td>
+                                <td class="text-nowrap">
+
+                                    <!-- EDITAR -->
+                                    <a asp-page="Edit"
+                                       asp-route-id="@a.AsientoId"
+                                       class="btn btn-sm btn-primary @(puedeAccionar ? "" : "disabled")"
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <!-- ANULAR -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger @(puedeAccionar ? "" : "disabled")"
+                                            title="Anular"
+                                            onclick="confirmarAnulacion('@a.AsientoId', '@a.Codigo')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+<!-- TOKEN -->
+<form id="tokenForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        let asientoIdSeleccionado = null;
+
+        function confirmarAnulacion(id, codigo) {
+            asientoIdSeleccionado = id;
+
+            const modalHtml = `
+            <div class="modal fade" id="modalAnular" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title">
+                                <i class="fas fa-exclamation-triangle"></i> Confirmar Anulación
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Desea anular o eliminar el asiento <strong>${codigo}</strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-dismiss="modal">No</button>
+                            <button class="btn btn-danger" onclick="submitAnulacion()">Sí</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            $('#modalAnular').remove();
+            $('body').append(modalHtml);
+            $('#modalAnular').modal('show');
+        }
+
+        function submitAnulacion() {
+            if (!asientoIdSeleccionado) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = window.location.pathname + '?handler=Anular';
+
+            const inputId = document.createElement('input');
+            inputId.type = 'hidden';
+            inputId.name = 'asientoId';   // 🔴 DEBE coincidir con OnPostAnularAsync(long asientoId)
+            inputId.value = asientoIdSeleccionado;
+            form.appendChild(inputId);
+
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = '__RequestVerificationToken';
+            token.value = document.querySelector('#tokenForm input[name="__RequestVerificationToken"]').value;
+            form.appendChild(token);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+}
+

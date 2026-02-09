@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Sistema_Contable.Entities;
+﻿using Sistema_Contable.Entities;
 
 namespace Sistema_Contable.Repository
 {
@@ -19,6 +14,15 @@ namespace Sistema_Contable.Repository
             string referencia,
             string usuarioCreacionId
         );
+
+        Task<Asiento> CrearAsientoConDetallesAsync(
+            DateTime fechaAsiento,
+            string codigo,
+            string referencia,
+            string usuarioCreacionId,
+            IEnumerable<(int CuentaId, string TipoMovimiento, decimal Monto, string Descripcion)> detalles
+        );
+
 
         Task AgregarDetalleAsync(
             long asientoId,
@@ -48,5 +52,12 @@ namespace Sistema_Contable.Repository
         );
 
         Task AnularAsientoAsync(long asientoId, string usuario);
+
+        Task<IEnumerable<PeriodoContable>> ListarPeriodosAsync(int? anio, int? mes);
+
+        Task ActualizarDetalleAsync(long detalleId, int cuentaId, string tipoMovimiento, decimal monto, string descripcion, string usuario);
+
+        Task AnularOEliminarAsync(long asientoId, string usuario);
+
     }
 }

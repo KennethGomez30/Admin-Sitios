@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Sistema_Contable.Entities;
+﻿using Sistema_Contable.Entities;
 
 namespace Sistema_Contable.Services
 {
@@ -11,8 +6,7 @@ namespace Sistema_Contable.Services
     {
         Task<IEnumerable<Asiento>> ListarAsientosAsync(long? periodoId, string? estadoCodigo);
 
-        Task<(Asiento Encabezado, IEnumerable<AsientoDetalle> Detalle)>
-            ObtenerAsientoAsync(long asientoId);
+        Task<(Asiento Encabezado, IEnumerable<AsientoDetalle> Detalle)> ObtenerAsientoAsync(long asientoId);
 
         Task<Asiento> CrearAsientoAsync(
             DateTime fechaAsiento,
@@ -20,6 +14,9 @@ namespace Sistema_Contable.Services
             string referencia,
             string usuarioCreacionId
         );
+
+        Task AnularOEliminarAsync(long asientoId, string usuario);
+
 
         Task AgregarDetalleAsync(
             long asientoId,
@@ -30,16 +27,22 @@ namespace Sistema_Contable.Services
             string usuario
         );
 
+        
         Task EliminarDetalleAsync(long detalleId, string usuario);
-
-        Task ActualizarEncabezadoAsync(
-            long asientoId,
-            DateTime fecha,
-            string codigo,
-            string referencia,
+        Task ActualizarEncabezadoAsync(long asientoId, DateTime fecha, string codigo, string referencia, string usuario);
+        Task ActualizarDetalleAsync(
+            long detalleId,
+            int cuentaId,
+            string tipoMovimiento,
+            decimal monto,
+            string descripcion,
             string usuario
         );
 
+
         Task AnularAsientoAsync(long asientoId, string usuario);
+
+        Task<IEnumerable<PeriodoContable>> ListarPeriodosAsync(int? anio, int? mes);
+
     }
 }

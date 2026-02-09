@@ -95,19 +95,23 @@
                                 <!-- Cerrar / Abrir -->
                                 @if (p.Estado == "ABIERTO")
                                 {
-                                    <a asp-page="./PeriodoContableCerrar"
-                                       asp-route-id="@p.PeriodoId"
-                                       class="btn btn-dark btn-sm ml-1">
+                                    <button type="button"
+                                            class="btn btn-dark btn-sm ml-1 btn-accion-periodo"
+                                            data-id="@p.PeriodoId"
+                                            data-accion="Cerrar"
+                                            data-texto="@($"{p.Anio}-{p.Mes:D2}")">
                                         <i class="fas fa-lock"></i> Cerrar
-                                    </a>
+                                    </button>
                                 }
                                 else
                                 {
-                                    <a asp-page="./PeriodoContableReabrir"
-                                       asp-route-id="@p.PeriodoId"
-                                       class="btn btn-info btn-sm ml-1">
+                                    <button type="button"
+                                            class="btn btn-info btn-sm ml-1 btn-accion-periodo"
+                                            data-id="@p.PeriodoId"
+                                            data-accion="Abrir"
+                                            data-texto="@($"{p.Anio}-{p.Mes:D2}")">
                                         <i class="fas fa-unlock"></i> Abrir
-                                    </a>
+                                    </button>
                                 }
                             </td>
                         </tr>
@@ -161,19 +165,52 @@
         </div>
     </div>
 </div>
+<!-- Modal Cerrar/Abrir -->
+<div class="modal fade" id="modalAccionPeriodo" tabindex="-1" role="dialog" aria-labelledby="modalAccionPeriodoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAccionPeriodoLabel">Confirmar acción</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-0" id="textoAccionPeriodo"></p>
+
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+
+                <form method="post" asp-page-handler="AccionPeriodo">
+                    <input type="hidden" id="periodoIdAccion" name="periodoId" />
+                    <input type="hidden" id="accionPeriodoHidden" name="accion" />
+                    <input type="hidden" name="estado" value="@Model.Estado" />
+                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 
     <script>
         $(function () {
 
-           
+
             if ($.fn.DataTable) {
                 $('#dataTable').DataTable({
                     ordering: false
                 });
             }
 
-            
+
             $('.btn-eliminar').on('click', function () {
                 var id = $(this).data('id');
                 var texto = $(this).data('texto');
@@ -192,7 +229,26 @@
 
                 $('#modalEliminar').modal('show');
             }
+            $(document).on('click', '.btn-accion-periodo', function () {
+                var id = $(this).data('id');
+                var accion = $(this).data('accion'); // Cerrar / Abrir
+                var texto = $(this).data('texto');
+
+                $('#periodoIdAccion').val(id);
+                $('#accionPeriodoHidden').val(accion);
+
+                if (accion === 'Cerrar') {
+                    $('#modalAccionPeriodoLabel').text('Confirmar cierre');
+                    $('#textoAccionPeriodo').text('¿Seguro que deseas cerrar el período ' + texto + '?');
+                } else {
+                    $('#modalAccionPeriodoLabel').text('Confirmar apertura');
+                    $('#textoAccionPeriodo').text('¿Seguro que deseas abrir el período ' + texto + '?');
+                }
+
+                $('#modalAccionPeriodo').modal('show');
+            });
+
         });
+
     </script>
 }
-

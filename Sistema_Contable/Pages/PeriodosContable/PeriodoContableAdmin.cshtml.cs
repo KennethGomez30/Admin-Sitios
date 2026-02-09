@@ -12,7 +12,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		public IEnumerable<PeriodosContables> Periodos { get; set; } = [];
 
 		[BindProperty(SupportsGet = true)]
-		public string? Estado { get; set; } 
+		public string? Estado { get; set; }
 
 		public PeriodoContableAdminModel(IPeriodoContableService service)
 		{
@@ -22,6 +22,12 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		public string? MensajeModalEliminar { get; set; }
 		public int PeriodoIdModal { get; set; }
 		public string? PeriodoTextoModal { get; set; }
+		public bool MostrarModalAccion { get; set; }
+		public string? MensajeModalAccion { get; set; }
+		public int PeriodoIdAccionModal { get; set; }
+		public string? AccionModal { get; set; }
+		public string? PeriodoTextoAccionModal { get; set; }
+
 		public async Task OnGetAsync()
 		{
 			var filtro = string.IsNullOrWhiteSpace(Estado) ? null : Estado.Trim();
@@ -29,7 +35,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		}
 		public async Task<IActionResult> OnPostEliminarAsync(int idEliminar, string? estado)
 		{
-			Estado = estado; 
+			Estado = estado;
 			var (ok, msg) = await _service.EliminarAsync(idEliminar);
 
 			if (ok)
@@ -38,21 +44,40 @@ namespace Sistema_Contable.Pages.PeriodosContable
 				return RedirectToPage();
 			}
 
-			
+
 			TempData["Error"] = msg;
 
-			
+
 			Periodos = await _service.ListarAsync(Estado);
 
 			MostrarModalEliminar = true;
 			MensajeModalEliminar = msg;
 			PeriodoIdModal = idEliminar;
 
-			
+
 			var p = Periodos.FirstOrDefault(x => x.PeriodoId == idEliminar);
 			PeriodoTextoModal = p != null ? $"{p.Anio}-{p.Mes:D2}" : $"ID {idEliminar}";
 
 			return Page();
+		}
+
+		public async Task<IActionResult> OnPostAccionPeriodoAsync(int periodoId, string accion, string? estado)
+		{
+			Estado = estado;
+
+			var usuarioCierre = HttpContext.Session.GetString("UsuarioNombre")
+								?? HttpContext.Session.GetString("UsuarioId")
+								?? "Sistema";
+
+			(bool ok, string msg) res;
+
+			if (accion == "Cerrar")
+				res = await _service.CerrarAsync(periodoId, usuarioCierre);
+			else
+				res = await _service.ReabrirAsync(periodoId);
+
+			TempData[res.ok ? "Success" : "Error"] = res.msg;
+			return RedirectToPage(new { Estado = Estado });
 		}
 	}
 }

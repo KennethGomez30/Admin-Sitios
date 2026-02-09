@@ -9,7 +9,7 @@ namespace Sistema_Contable.Services
         Task<(bool Ok, string? Error, ulong? Id)> CrearAsync(Pantalla p, string? usuario);
         Task<(bool Ok, string? Error)> ActualizarAsync(Pantalla p, string? usuario);
         Task<(bool Ok, string? Error)> EliminarAsync(ulong id, string? usuario);
-        Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId);
+        Task<IEnumerable<Pantalla>> ObtenerMenuPorUsuarioAsync(string usuarioId, string seccion);
     }
 }
 

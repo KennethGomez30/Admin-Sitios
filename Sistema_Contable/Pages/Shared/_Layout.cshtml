@@ -2,16 +2,21 @@
 @inject Sistema_Contable.Services.IPantallaService PantallaService
 
 @{
-    // Obtener datos de sesión (TU LÓGICA intacta)
+    // Obtener datos de sesión
     var usuarioNombre = Context.Session.GetString("UsuarioNombre") ?? "Usuario";
 
     // Para menú dinámico por usuario
     var usuarioId = Context.Session.GetString("UsuarioId");
-    IEnumerable<Pantalla> menuPantallas = Enumerable.Empty<Pantalla>();
+
+    IEnumerable<Pantalla> menuAdmin = Enumerable.Empty<Pantalla>();
+    IEnumerable<Pantalla> menuContabilidad = Enumerable.Empty<Pantalla>();
+    IEnumerable<Pantalla> menuContadorJefe = Enumerable.Empty<Pantalla>();
 
     if (!string.IsNullOrEmpty(usuarioId))
     {
-        menuPantallas = await PantallaService.ObtenerMenuPorUsuarioAsync(usuarioId);
+        menuAdmin = await PantallaService.ObtenerMenuPorUsuarioAsync(usuarioId, "ADMIN");
+        menuContabilidad = await PantallaService.ObtenerMenuPorUsuarioAsync(usuarioId, "CONTADOR");
+        menuContadorJefe = await PantallaService.ObtenerMenuPorUsuarioAsync(usuarioId, "CONTADOR JEFE");
     }
 }
 
@@ -22,17 +27,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Sistema Contable</title>
 
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="~/vendor/fontawesome-free/css/all.min.css" asp-append-version="true" />
-
-    <!-- Fuente Nunito -->
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" />
-
-    <!-- SB Admin 2 CSS -->
     <link rel="stylesheet" href="~/css/sb-admin-2.css" asp-append-version="true" />
-
-    <!-- CSS personalizado -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     @RenderSection("Styles", required: false)
@@ -41,7 +39,6 @@
 <body id="page-top">
     <div id="wrapper">
 
-        <!-- Sidebar -->
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <a class="sidebar-brand d-flex align-items-center justify-content-center" asp-page="/Index">
@@ -62,14 +59,14 @@
 
             <hr class="sidebar-divider" />
 
-            <div class="sidebar-heading">
-                Administración
-            </div>
+            <!-- ===================== -->
+            <!-- ADMINISTRACIÓN -->
+            <!-- ===================== -->
+            <div class="sidebar-heading">Administración</div>
 
-            @* MENÚ DINÁMICO SEGÚN ROL *@
-            @if (menuPantallas != null && menuPantallas.Any())
+            @if (menuAdmin != null && menuAdmin.Any())
             {
-                foreach (var p in menuPantallas)
+                foreach (var p in menuAdmin)
                 {
                     <li class="nav-item">
                         <a class="nav-link" href="@p.ruta">
@@ -81,29 +78,86 @@
             }
             else
             {
-                @* Si por alguna razón no hay pantallas asignadas *@
                 <li class="nav-item">
-                    <a class="nav-link" asp-page="/Index">
+                    <a class="nav-link" href="javascript:void(0);">
                         <i class="fas fa-fw fa-info-circle"></i>
                         <span>Sin opciones</span>
                     </a>
                 </li>
             }
- 
+
+            <hr class="sidebar-divider" />
+
+            <!-- ===================== -->
+            <!-- CONTABILIDAD -->
+            <!-- ===================== -->
+            <div class="sidebar-heading">Contabilidad</div>
+
+            @if (menuContabilidad != null && menuContabilidad.Any())
+            {
+                foreach (var p in menuContabilidad)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="@p.ruta">
+                            <i class="fas fa-fw fa-angle-right"></i>
+                            <span>@p.nombre</span>
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:void(0);">
+                        <i class="fas fa-fw fa-info-circle"></i>
+                        <span>Sin opciones</span>
+                    </a>
+                </li>
+            }
+
+            <!-- ===================== -->
+            <!-- CONTADOR JEFE -->
+            <!-- ===================== -->
+
+            <hr class="sidebar-divider" />
+
+            <div class="sidebar-heading">Contador Jefe</div>
+
+            @if (menuContadorJefe != null && menuContadorJefe.Any())
+            {
+                foreach (var p in menuContadorJefe)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="@p.ruta">
+                            <i class="fas fa-fw fa-angle-right"></i>
+                            <span>@p.nombre</span>
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="javascript:void(0);">
+                        <i class="fas fa-fw fa-info-circle"></i>
+                        <span>Sin opciones</span>
+                    </a>
+                </li>
+            }
+            
+
             <hr class="sidebar-divider d-none d-md-block" />
 
             <div class="text-center d-none d-md-inline">
                 <button class="rounded-circle border-0" id="sidebarToggle"></button>
             </div>
         </ul>
-        <!-- End Sidebar -->
 
+        <!-- End Sidebar -->
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
 
-                <!-- Topbar -->
                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
                     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
                         <i class="fa fa-bars"></i>
                     </button>
@@ -133,7 +187,6 @@
                         </li>
                     </ul>
                 </nav>
-                <!-- End Topbar -->
 
                 <div class="container-fluid">
                     @RenderBody()
@@ -155,7 +208,6 @@
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <!-- Scripts -->
     <script src="~/vendor/jquery/jquery.min.js" asp-append-version="true"></script>
     <script src="~/vendor/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/vendor/jquery-easing/jquery.easing.min.js" asp-append-version="true"></script>

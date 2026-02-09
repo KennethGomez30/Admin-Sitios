@@ -1,0 +1,232 @@
+﻿@page
+@model Sistema_Contable.Pages.CuentasContables.IndexModel
+@{
+    ViewData["Title"] = "Cuentas Contables";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-sitemap text-primary"></i> Administrador de Cuentas Contables
+    </h1>
+
+    <a class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" asp-page="Create">
+        <i class="fas fa-plus fa-sm text-white-50"></i> Nueva Cuenta
+    </a>
+</div>
+
+<!-- Token antifalsificación para el formulario de eliminación -->
+<form id="tokenForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Listado</h6>
+
+        <form method="get" class="form-inline">
+            <select name="Estado" class="form-control form-control-sm mr-2">
+                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Estado))">Todos</option>
+                <option value="activa" selected="@(Model.Estado == "activa")">Activas</option>
+                <option value="inactiva" selected="@(Model.Estado == "inactiva")">Inactivas</option>
+            </select>
+
+            <button class="btn btn-sm btn-outline-primary" type="submit">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Código Cuenta</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Tipo Saldo</th>
+                        <th>Cuenta Padre</th>
+                        <th class="text-center">Acepta Mov.</th>
+                        <th>Estado</th>
+                        <th class="text-center" style="width:140px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model.Items)
+                    {
+                        <tr>
+                            <td>@x.Codigo</td>
+                            <td>@x.Nombre</td>
+                            <td>@x.Tipo</td>
+                            <td>@x.TipoSaldo</td>
+                            <td>
+                                @(string.IsNullOrWhiteSpace(x.CuentaPadreCodigo)
+                                                            ? "-"
+                                                            : $"{x.CuentaPadreCodigo} - {x.CuentaPadreNombre}")
+                        </td>
+                        <td class="text-center">@(x.AceptaMovimiento ? "Sí" : "No")</td>
+                        <td>@(x.Activo ? "Activa" : "Inactiva")</td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-warning" asp-page="Edit" asp-route-id="@x.IdCuenta" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        onclick="confirmarEliminacion('@x.IdCuenta', '@($"{x.Codigo} - {x.Nombre}")')"
+                                        title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                                        }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-end">
+                    @for (int p = 1; p <= Model.TotalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link"
+                               asp-page="./Index"
+                               asp-route-Estado="@Model.Estado"
+                               asp-route-Page="@p">@p</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+            {
+                    <text>
+                    var modalHtml = `
+                        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-success text-white">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-check-circle"></i> Éxito
+                                        </h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal">
+                                            <span>&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @Model.SuccessMessage
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-success" data-dismiss="modal">Aceptar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('body').append(modalHtml);
+                    $('#modalMensaje').modal('show');
+                    $('#modalMensaje').on('hidden.bs.modal', function () {
+                        $(this).remove();
+                    });
+                    </text>
+            }
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                    <text>
+                    var modalHtml = `
+                        <div class="modal fade" id="modalMensaje" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title">
+                                            <i class="fas fa-exclamation-triangle"></i> Error
+                                        </h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal">
+                                            <span>&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @Model.ErrorMessage
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-danger" data-dismiss="modal">Aceptar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    $('body').append(modalHtml);
+                    $('#modalMensaje').modal('show');
+                    $('#modalMensaje').on('hidden.bs.modal', function () {
+                        $(this).remove();
+                    });
+                    </text>
+            }
+        });
+
+        function confirmarEliminacion(idCuenta, label) {
+            var modalHtml = `
+                <div class="modal fade" id="modalEliminar" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                                </h5>
+                                <button type="button" class="close text-white" data-dismiss="modal">
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>¿Realmente desea eliminar el elemento seleccionado?</p>
+                                <p><strong>Cuenta:</strong> ${label}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                                <button type="button" class="btn btn-danger" onclick="eliminarCuenta('${idCuenta}')">Sí</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#modalEliminar').remove();
+            $('body').append(modalHtml);
+            $('#modalEliminar').modal('show');
+        }
+
+        function eliminarCuenta(idCuenta) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+
+            // Asegurar que postea al path actual (más robusto con querystrings)
+            form.action = window.location.pathname + '?handler=Eliminar';
+
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'id';
+            input.value = idCuenta;
+            form.appendChild(input);
+
+            var token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = '__RequestVerificationToken';
+
+            // Tomar el token SOLO del form tokenForm
+            token.value = $('#tokenForm input[name="__RequestVerificationToken"]').val();
+
+            form.appendChild(token);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+}

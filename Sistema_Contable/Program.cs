@@ -1,48 +1,68 @@
-﻿using Sistema_Contable.Repository;
-using Sistema_Contable.Services;
+﻿using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Sistema_Contable.Filters;
+using Sistema_Contable.Repository;
+using Sistema_Contable.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages(options =>
 {
-    // Registrar filtro de autenticación globalmente
-    options.Conventions.ConfigureFilter(new AutenticacionFilter());
+    options.Conventions.ConfigureFilter(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(AutenticacionFilter)));
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// Registrar repositorios y servicios
-builder.Services.AddScoped<IUsuarioRepository>(sp => new UsuarioRepository(connectionString));
-builder.Services.AddScoped<IBitacoraRepository>(sp => new BitacoraRepository(connectionString));
-builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
+// Registrar DbConnectionFactory como Singleton
+builder.Services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
 
-builder.Services.AddScoped<IEstadosAsientoRepository>(sp => new EstadosAsientoRepository(connectionString));
+
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IBitacoraRepository, BitacoraRepository>();
+builder.Services.AddScoped<IRolRepository, RolRepository>();
+builder.Services.AddScoped<ICuentaContableRepository, CuentaContableRepository>();
+
+builder.Services.AddScoped<IAutenticacionService, AutenticacionService>();
+builder.Services.AddScoped<IRolService, RolService>();
+builder.Services.AddScoped<ICuentaContableService, CuentaContableService>();
+
+builder.Services.AddScoped<IPantallaRepository, PantallaRepository>();
+builder.Services.AddScoped<IPantallaService, PantallaService>();
+
+builder.Services.AddScoped<Sistema_Contable.Repository.ICierreContableRepository, Sistema_Contable.Repository.CierreContableRepository>();
+builder.Services.AddScoped<Sistema_Contable.Services.ICierreContableService, Sistema_Contable.Services.CierreContableService>();
+
+builder.Services.AddScoped<AutenticacionFilter>();
+
+
+builder.Services.AddScoped<IEstadosAsientoRepository>(_ => new EstadosAsientoRepository(connectionString));
 builder.Services.AddScoped<IEstadosAsientoService, EstadoAsientoService>();
 
-builder.Services.AddScoped<IPeriodoContableRepository>(_ => new PeriodoContableRepository(connectionString!));
+builder.Services.AddScoped<IPeriodoContableRepository>(_ => new PeriodoContableRepository(connectionString));
 builder.Services.AddScoped<IPeriodoContableService, PeriodoContableService>();
 
-builder.Services.AddScoped<ICambiarEstadoAsientoRepository>(sp =>new CambiarEstadoAsientoRepository(connectionString!));
-
+builder.Services.AddScoped<ICambiarEstadoAsientoRepository>(_ => new CambiarEstadoAsientoRepository(connectionString));
 builder.Services.AddScoped<ICambiarEstadoAsientoService, CambiarEstadoAsientoService>();
 
 
 
-// Configurar sesión - ADM4: 5 minutos de timeout
+// 5 minutos de timeout
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(5);
+    options.IdleTimeout = TimeSpan.FromMinutes(6);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler("/Error");
 app.UseHsts();
 
@@ -51,7 +71,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Habilitar sesión
+// Habilitar sesión ANTES de la autorización
 app.UseSession();
 
 app.UseAuthorization();

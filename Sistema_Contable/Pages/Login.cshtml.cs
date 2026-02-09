@@ -25,27 +25,16 @@ namespace Sistema_Contable.Pages
         // Solo usar propiedad normal
         public string? MensajeInfo { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            // Si ya existe sesión activa, redirigir a Index
             var usuarioIdActual = HttpContext.Session.GetString("UsuarioId");
             if (!string.IsNullOrEmpty(usuarioIdActual))
-            {
-                Response.Redirect("/Index");
-                return;
-            }
+                return RedirectToPage("/Index");
 
-            // Leer mensaje ANTES de limpiar
-            var mensajeRedireccion = HttpContext.Session.GetString("MensajeRedireccion");
+            MensajeInfo = HttpContext.Session.GetString("MensajeRedireccion");
+            HttpContext.Session.Remove("MensajeRedireccion");
 
-            // Limpiar TODA la sesión
-            HttpContext.Session.Clear();
-
-            // Solo mostrar mensaje si existía
-            if (!string.IsNullOrEmpty(mensajeRedireccion))
-            {
-                MensajeInfo = mensajeRedireccion;
-            }
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -58,7 +47,7 @@ namespace Sistema_Contable.Pages
                 HttpContext.Session.SetString("UsuarioId", resultado.Usuario.Identificacion);
                 HttpContext.Session.SetString("UsuarioNombre", resultado.Usuario.NombreCompleto);
                 HttpContext.Session.SetString("UsuarioCorreo", resultado.Usuario.Correo);
-
+                HttpContext.Session.SetString("UltimoAccesoUtc", DateTime.UtcNow.ToString("O")); // login expira 
                 // Redirigir a la página de bienvenida (Index)
                 return RedirectToPage("/Index");
             }

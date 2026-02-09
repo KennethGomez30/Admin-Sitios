@@ -25,6 +25,10 @@ builder.Services.AddScoped<IEstadosAsientoService, EstadoAsientoService>();
 builder.Services.AddScoped<IPeriodoContableRepository>(_ => new PeriodoContableRepository(connectionString!));
 builder.Services.AddScoped<IPeriodoContableService, PeriodoContableService>();
 
+builder.Services.AddScoped<ICambiarEstadoAsientoRepository>(sp =>new CambiarEstadoAsientoRepository(connectionString!));
+
+builder.Services.AddScoped<ICambiarEstadoAsientoService, CambiarEstadoAsientoService>();
+
 
 
 // Configurar sesión - ADM4: 5 minutos de timeout

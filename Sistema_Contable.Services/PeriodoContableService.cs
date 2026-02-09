@@ -23,9 +23,7 @@ namespace Sistema_Contable.Services
 		public Task<PeriodosContables?> ObtenerAsync(int periodoId)
 			=> _repo.ObtenerAsync(periodoId);
 
-		// =========================
-		// CREAR
-		// =========================
+		//Crear
 		public async Task<(bool Ok, string Mensaje)> CrearAsync(int anio, int mes)
 		{
 			var v = ValidarAnioMes(anio, mes);
@@ -35,15 +33,6 @@ namespace Sistema_Contable.Services
 			if (await _repo.ObtenerPorAnioMesAsync(anio, mes) != null)
 				return (false, "Ya existe un período con ese año y mes.");
 
-			// Validar consecutividad con el abierto más reciente
-			var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
-			if (abiertoReciente != null)
-			{
-				var (sigAnio, sigMes) = SiguienteMes(abiertoReciente.Anio, abiertoReciente.Mes);
-				if (anio != sigAnio || mes != sigMes)
-					return (false,
-						$"Solo puede crear el siguiente período consecutivo al más reciente abierto ({sigAnio}-{sigMes:D2}).");
-			}
 
 			var nuevo = new PeriodosContables
 			{
@@ -53,16 +42,35 @@ namespace Sistema_Contable.Services
 				Activo = true
 			};
 
-			await _repo.InsertarAsync(nuevo);
-			await _repo.MarcarActivoAsync(nuevo.PeriodoId);
+			var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
+			abiertos.Add(nuevo);
+
+			if (!SonConsecutivos(abiertos))
+				return (false, "No se puede crear el período abierto");
+
+			var id = await _repo.InsertarAsync(nuevo);
+			nuevo.PeriodoId = id;
+
+			var abiertoReciente = abiertos
+	   .OrderByDescending(x => x.Anio)
+	   .ThenByDescending(x => x.Mes)
+	   .FirstOrDefault();
+
+			if (abiertoReciente != null)
+			{
+				
+				if (abiertoReciente.PeriodoId == 0)
+					await _repo.MarcarActivoAsync(id);
+				else
+					await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
+			}
 
 			return (true, "Período creado correctamente.");
 		}
+		
 
-		// =========================
-		// EDITAR
-		// =========================
-		public async Task<(bool Ok, string Mensaje)> EditarAsync(int periodoId, int anio, int mes)
+		//Editar
+		public async Task<(bool Ok, string Mensaje)> EditarAsync(int periodoId, int anio, int mes, string? usuarioCierre, DateTime? fechaCierre)
 		{
 			var v = ValidarAnioMes(anio, mes);
 			if (!v.Ok) return v;
@@ -71,9 +79,8 @@ namespace Sistema_Contable.Services
 			if (actual == null)
 				return (false, "El período no existe.");
 
-			// No permitir editar períodos cerrados
-			if (actual.Estado.Equals("Cerrado", StringComparison.OrdinalIgnoreCase))
-				return (false, "No se puede modificar un período cerrado.");
+			var estado = (actual.Estado ?? "").Trim();
+
 
 			// Evitar duplicados por año/mes
 			var duplicado = await _repo.ObtenerPorAnioMesAsync(anio, mes);
@@ -82,10 +89,30 @@ namespace Sistema_Contable.Services
 
 			actual.Anio = anio;
 			actual.Mes = mes;
+			actual.Estado = estado;
+
+			if (estado.Equals("Cerrado", StringComparison.OrdinalIgnoreCase))
+			{
+				usuarioCierre = (usuarioCierre ?? "").Trim();
+				if (string.IsNullOrWhiteSpace(usuarioCierre))
+					return (false, "El usuario de cierre es requerido para períodos cerrados.");
+
+				if (fechaCierre == null)
+					return (false, "La fecha de cierre es requerida para períodos cerrados.");
+
+				actual.UsuarioCierre = usuarioCierre;
+				actual.FechaCierre = fechaCierre;
+			}
+			else
+			{
+				
+				actual.UsuarioCierre = null;
+				actual.FechaCierre = null;
+			}
 
 			await _repo.ActualizarAsync(actual);
 
-			// Validar que los abiertos sigan siendo consecutivos
+			// Validar consecutividad de abiertos (por si año/mes tocó la secuencia)
 			var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
 			if (!SonConsecutivos(abiertos))
 				return (false, "La modificación rompe la regla de períodos abiertos consecutivos.");
@@ -93,9 +120,7 @@ namespace Sistema_Contable.Services
 			return (true, "Período actualizado correctamente.");
 		}
 
-		// =========================
-		// ELIMINAR
-		// =========================
+		//Eliminar
 		public async Task<(bool Ok, string Mensaje)> EliminarAsync(int periodoId)
 		{
 			var actual = await _repo.ObtenerAsync(periodoId);
@@ -107,7 +132,7 @@ namespace Sistema_Contable.Services
 
 			await _repo.EliminarAsync(periodoId);
 
-			// Asegurar activo correcto
+			
 			var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
 			if (abiertoReciente != null)
 				await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
@@ -115,9 +140,7 @@ namespace Sistema_Contable.Services
 			return (true, "Período eliminado correctamente.");
 		}
 
-		// =========================
-		// CERRAR
-		// =========================
+		//Cerrar
 		public async Task<(bool Ok, string Mensaje)> CerrarAsync(int periodoId, string usuarioCierre)
 		{
 			usuarioCierre = (usuarioCierre ?? "").Trim();
@@ -132,7 +155,7 @@ namespace Sistema_Contable.Services
 				return (false, "El período ya está cerrado.");
 
 			var abiertosAsc = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
-
+			var cerroAlgo = false;
 			foreach (var p in abiertosAsc)
 			{
 				if (EsMenorIgual(p.Anio, p.Mes, target.Anio, target.Mes))
@@ -141,16 +164,17 @@ namespace Sistema_Contable.Services
 				}
 			}
 
-			var nuevoActivo = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
-			if (nuevoActivo != null)
-				await _repo.MarcarActivoAsync(nuevoActivo.PeriodoId);
+			if (!cerroAlgo)
+				await _repo.CerrarPeriodoAsync(target.PeriodoId, usuarioCierre);
+
+			var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
+			if (abiertoReciente != null)
+				await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
 
 			return (true, "Período(s) cerrado(s) correctamente.");
 		}
 
-		// =========================
-		// REABRIR
-		// =========================
+		//Reabrir
 		public async Task<(bool Ok, string Mensaje)> ReabrirAsync(int periodoId)
 		{
 			var target = await _repo.ObtenerAsync(periodoId);
@@ -177,22 +201,29 @@ namespace Sistema_Contable.Services
 			);
 
 			foreach (var p in rango)
-				await _repo.ReabrirPeriodoAsync(p.PeriodoId);
+			{
+				if (p.Estado.Equals("Cerrado", StringComparison.OrdinalIgnoreCase))
+					await _repo.ReabrirPeriodoAsync(p.PeriodoId);
+			}
 
-			var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
-			if (abiertoReciente != null)
-				await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
-
+			// Validar consecutivos de abiertos
 			var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
 			if (!SonConsecutivos(abiertos))
-				return (false, "La reapertura rompe la regla de períodos abiertos consecutivos.");
+				return (false, "No se puede reabrir.");
+
+			// Activo = más reciente abierto
+			var abiertoReciente = abiertos
+				.OrderByDescending(x => x.Anio)
+				.ThenByDescending(x => x.Mes)
+				.FirstOrDefault();
+
+			if (abiertoReciente != null)
+				await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
 
 			return (true, "Período(s) reabierto(s) correctamente.");
 		}
 
-		// =========================
-		// HELPERS
-		// =========================
+       //Validaciones
 		private static (bool Ok, string Mensaje) ValidarAnioMes(int anio, int mes)
 		{
 			if (anio < 1900 || anio > 2100)

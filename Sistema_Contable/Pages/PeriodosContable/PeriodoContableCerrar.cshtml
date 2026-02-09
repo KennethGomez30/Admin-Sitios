@@ -1,0 +1,37 @@
+﻿@page
+@model Sistema_Contable.Pages.PeriodosContable.PeriodoContableCerrarModel
+@{
+    ViewData["Title"] = "Cerrar Período";
+}
+
+<h1 class="h3 mb-4 text-gray-800">Cerrar Período</h1>
+
+@if (Model.Periodo != null)
+{
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Vas a cerrar el período:
+                <strong>@Model.Periodo.Anio-@Model.Periodo.Mes.ToString("D2")</strong>.
+                <br />
+                Si existen períodos abiertos anteriores, se cerrarán automáticamente.
+            </div>
+
+            <form method="post">
+                <div class="form-group">
+                    <label>Usuario de cierre</label>
+                    <input class="form-control" asp-for="UsuarioCierre" />
+                </div>
+
+                <button type="submit" class="btn btn-dark">
+                    <i class="fas fa-lock"></i> Confirmar cierre
+                </button>
+
+                <a asp-page="./PeriodoContableAdmin" class="btn btn-secondary">Cancelar</a>
+            </form>
+
+        </div>
+    </div>
+}

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sistema_Contable.Entities")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+75baf2daa640d5bbb7c2738ac00e52cab4a42dce")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3c3df0cb8a615267abbeaa09ab311a885f72fe65")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sistema_Contable.Entities")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sistema_Contable.Entities")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

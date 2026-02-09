@@ -1,0 +1,32 @@
+﻿@page "{id:int}"
+@model Sistema_Contable.Pages.PeriodosContable.PeriodoContableReabrirModel
+@{
+    ViewData["Title"] = "Reabrir Período";
+}
+
+<h1 class="h3 mb-4 text-gray-800">Reabrir Período</h1>
+
+@if (Model.Periodo != null)
+{
+    <div class="card shadow mb-4">
+        <div class="card-body">
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle mr-2"></i>
+                Vas a reabrir el período:
+                <strong>@Model.Periodo.Anio-@Model.Periodo.Mes.ToString("D2")</strong>.
+                <br />
+                Si existen períodos cerrados posteriores, se reabrirán en cascada hasta llegar al seleccionado.
+            </div>
+
+            <form method="post">
+                <button type="submit" class="btn btn-info">
+                    <i class="fas fa-unlock"></i> Confirmar reapertura
+                </button>
+
+                <a asp-page="./PeriodoContableAdmin" class="btn btn-secondary">Cancelar</a>
+            </form>
+
+        </div>
+    </div>
+}

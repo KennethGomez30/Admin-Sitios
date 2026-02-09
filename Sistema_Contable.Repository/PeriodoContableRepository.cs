@@ -51,7 +51,7 @@ namespace Sistema_Contable.Repository
 		public async Task<int> InsertarAsync(PeriodosContables p)
 		{
 			using var db = Db();
-			// el SP devuelve LAST_INSERT_ID() como PeriodoId
+			
 			var id = await db.ExecuteScalarAsync<int>(
 				"sp_periodos_insertar",
 				new
@@ -76,7 +76,9 @@ namespace Sistema_Contable.Repository
 					p_periodo_id = p.PeriodoId,
 					p_anio = p.Anio,
 					p_mes = p.Mes,
-					p_estado = p.Estado
+					p_estado = p.Estado,
+					p_usuario_cierre = p.UsuarioCierre,
+					p_fecha_cierre = p.FechaCierre
 				},
 				commandType: CommandType.StoredProcedure);
 		}

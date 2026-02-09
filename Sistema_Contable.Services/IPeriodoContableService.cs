@@ -13,7 +13,8 @@ namespace Sistema_Contable.Services
 		Task<PeriodosContables?> ObtenerAsync(int periodoId);
 
 		Task<(bool Ok, string Mensaje)> CrearAsync(int anio, int mes);
-		Task<(bool Ok, string Mensaje)> EditarAsync(int periodoId, int anio, int mes);
+		Task<(bool Ok, string Mensaje)> EditarAsync(int periodoId, int anio, int mes, string? usuarioCierre, DateTime? fechaCierre);
+
 
 		Task<(bool Ok, string Mensaje)> EliminarAsync(int periodoId);
 

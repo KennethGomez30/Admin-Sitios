@@ -1,0 +1,178 @@
+﻿@page
+@model Sistema_Contable.Pages.EstadosAsientos.CambiarEstadoAsientosModel
+@{
+    ViewData["Title"] = "Aprobación / Estados de Asientos";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Aprobación / Estados de Asientos</h1>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Listado</h6>
+
+        <form method="get" class="form-inline">
+            <label class="mr-2 font-weight-bold">Estado:</label>
+            <select name="Estado" class="form-control form-control-sm mr-2">
+                <option value="Pendiente de aprobación" selected="@(Model.Estado == "Pendiente de aprobación")">Pendiente de aprobación</option>
+                <option value="Todos" selected="@(Model.Estado == "Todos")">Todos</option>
+                @foreach (var e in Model.EstadosDisponibles)
+                {
+                    if (e == "Pendiente de aprobación") { continue; }
+                    <option value="@e" selected="@(Model.Estado == e)">@e</option>
+                }
+            </select>
+            <button class="btn btn-sm btn-secondary" type="submit">
+                <i class="fas fa-filter"></i> Filtrar
+            </button>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>Consecutivo</th>
+                        <th>Fecha</th>
+                        <th>Código</th>
+                        <th>Referencia</th>
+                        <th>Estado</th>
+                        <th style="width:380px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.Asientos)
+                    {
+                        var estado = (a.EstadoNombre ?? "").Trim();
+
+                        var esAnulado = estado.Equals("Anulado", StringComparison.OrdinalIgnoreCase);
+                        var esBorrador = estado.Equals("Borrador", StringComparison.OrdinalIgnoreCase);
+                        var esPend = estado.Equals("Pendiente de aprobación", StringComparison.OrdinalIgnoreCase);
+                        var esAprob = estado.Equals("Aprobado", StringComparison.OrdinalIgnoreCase);
+                        var esRech = estado.Equals("Rechazado", StringComparison.OrdinalIgnoreCase);
+
+                        <tr>
+                            <td>@a.Consecutivo</td>
+                            <td>@a.FechaAsiento.ToString("yyyy-MM-dd")</td>
+                            <td>@a.Codigo</td>
+                            <td>@a.Referencia</td>
+                            <td>@a.EstadoNombre</td>
+                            <td class="text-center">
+
+                                @if (esAnulado || esBorrador)
+                                {
+                                    <span class="text-muted">Sin acciones</span>
+                                }
+                                else
+                                {
+                                    if (esPend)
+                                    {
+                                        <button type="button" class="btn btn-success btn-sm btn-accion"
+                                                data-id="@a.AsientoId" data-accion="Aprobar"
+                                                data-texto="¿Aprobar el asiento @a.Consecutivo?">
+                                            <i class="fas fa-check"></i> Aprobar
+                                        </button>
+
+                                        <button type="button" class="btn btn-warning btn-sm ml-1 btn-accion"
+                                                data-id="@a.AsientoId" data-accion="Rechazar"
+                                                data-texto="¿Rechazar el asiento @a.Consecutivo?">
+                                            <i class="fas fa-times"></i> Rechazar
+                                        </button>
+
+                                        <button type="button" class="btn btn-danger btn-sm ml-1 btn-accion"
+                                                data-id="@a.AsientoId" data-accion="Anular"
+                                                data-texto="¿Anular el asiento @a.Consecutivo?">
+                                            <i class="fas fa-ban"></i> Anular
+                                        </button>
+                                    }
+
+                                    if (esAprob)
+                                    {
+                                        <button type="button" class="btn btn-info btn-sm btn-accion"
+                                                data-id="@a.AsientoId" data-accion="ReversarAprobacion"
+                                                data-texto="¿Reversar la aprobación del asiento @a.Consecutivo?">
+                                            <i class="fas fa-undo"></i> Reversar
+                                        </button>
+
+                                        <button type="button" class="btn btn-danger btn-sm ml-1 btn-accion"
+                                                data-id="@a.AsientoId" data-accion="Anular"
+                                                data-texto="¿Anular el asiento @a.Consecutivo?">
+                                            <i class="fas fa-ban"></i> Anular
+                                        </button>
+                                    }
+
+                                    if (esRech)
+                                    {
+                                        <button type="button" class="btn btn-info btn-sm btn-accion"
+                                                data-id="@a.AsientoId" data-accion="ReversarRechazo"
+                                                data-texto="¿Reversar el rechazo del asiento @a.Consecutivo?">
+                                            <i class="fas fa-undo"></i> Reversar rechazo
+                                        </button>
+                                    }
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación  -->
+<div class="modal fade" id="modalAccion" tabindex="-1" role="dialog" aria-labelledby="modalAccionLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAccionLabel">Confirmar acción</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <p id="modalTexto" class="mb-0"></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+
+                <form method="post" asp-page-handler="Accion">
+                    <input type="hidden" id="modalId" name="id" />
+                    <input type="hidden" id="modalAccionHidden" name="accion" />
+                    <input type="hidden" name="estado" value="@Model.Estado" />
+                    <button type="submit" class="btn btn-primary">
+                        Confirmar
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+
+            if ($.fn.DataTable && !$.fn.DataTable.isDataTable('#dataTable')) {
+                $('#dataTable').DataTable({ ordering: false });
+            }
+
+            $('.btn-accion').on('click', function () {
+                var id = $(this).data('id');
+                var accion = $(this).data('accion');
+                var texto = $(this).data('texto');
+
+                $('#modalId').val(id);
+                $('#modalAccionHidden').val(accion);
+                $('#modalTexto').text(texto);
+
+                $('#modalAccion').modal('show');
+            });
+        });
+    </script>
+}

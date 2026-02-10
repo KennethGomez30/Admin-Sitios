@@ -17,7 +17,9 @@ namespace Sistema_Contable.Pages.Pantallas
         public List<Pantalla> Pantallas { get; set; } = new();
 
         [BindProperty(SupportsGet = true)] public string? q { get; set; }
-        [BindProperty(SupportsGet = true)] public int page { get; set; } = 1;
+
+        // CAMBIO: antes era "page"
+        [BindProperty(SupportsGet = true)] public int p { get; set; } = 1;
 
         public int PageSize { get; } = 10;
         public int Total { get; set; }
@@ -32,14 +34,14 @@ namespace Sistema_Contable.Pages.Pantallas
             if (string.IsNullOrWhiteSpace(usuario))
                 return RedirigirLogin("Debes iniciar sesión para acceder al sistema.");
 
-            if (page < 1) page = 1;
+            if (p < 1) p = 1;
 
-            var (data, total) = await _pantallaService.ObtenerPaginadoAsync(page, PageSize, q, usuario);
+            var (data, total) = await _pantallaService.ObtenerPaginadoAsync(p, PageSize, q, usuario);
             Pantallas = data.ToList();
             Total = total;
 
-            if (TotalPages > 0 && page > TotalPages)
-                return RedirectToPage(new { page = TotalPages, q });
+            if (TotalPages > 0 && p > TotalPages)
+                return RedirectToPage(new { p = TotalPages, q });
 
             return Page();
         }
@@ -53,19 +55,16 @@ namespace Sistema_Contable.Pages.Pantallas
             if (id == 0)
             {
                 ErrorMessage = "Registro no válido.";
-                return RedirectToPage(new { page, q });
+                return RedirectToPage(new { p, q });
             }
 
             var (ok, error) = await _pantallaService.EliminarAsync(id, usuario);
 
-            if (ok)
-                SuccessMessage = "Registro eliminado con éxito.";
-            else
-                ErrorMessage = error ?? "No se pudo eliminar.";
+            SuccessMessage = ok ? "Registro eliminado con éxito." : null;
+            ErrorMessage = ok ? null : (error ?? "No se pudo eliminar.");
 
-            return RedirectToPage(new { page, q });
+            return RedirectToPage(new { p, q });
         }
-
 
         private IActionResult RedirigirLogin(string msg)
         {
@@ -74,5 +73,3 @@ namespace Sistema_Contable.Pages.Pantallas
         }
     }
 }
-
-

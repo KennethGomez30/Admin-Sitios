@@ -13,7 +13,7 @@
     </a>
 </div>
 
-<!-- Token antifalsificación para el formulario de eliminación (igual que Usuarios) -->
+<!-- Token antifalsificación para el formulario de eliminación -->
 <form id="tokenForm" style="display:none;">
     @Html.AntiForgeryToken()
 </form>
@@ -23,6 +23,9 @@
         <h6 class="m-0 font-weight-bold text-primary">Listado de Pantallas</h6>
 
         <form method="get" class="form-inline mt-3 mt-md-0">
+            <!-- Mantener página actual al buscar -->
+            <input type="hidden" name="p" value="@Model.p" />
+
             <div class="input-group">
                 <input class="form-control"
                        type="text"
@@ -62,41 +65,39 @@
                     }
                     else
                     {
-                        foreach (var p in Model.Pantallas)
+                        foreach (var pItem in Model.Pantallas)
                         {
                             <tr>
-                                <td>@p.nombre</td>
-                                <td>@p.descripcion</td>
+                                <td>@pItem.nombre</td>
+                                <td>@pItem.descripcion</td>
 
-                                <!-- Ruta como badge azul (igual a como querías) -->
                                 <td class="text-nowrap">
-                                    <span class="badge badge-primary">@p.ruta</span>
+                                    <span class="badge badge-primary">@pItem.ruta</span>
                                 </td>
 
                                 <td>
-                                    @if (p.estado == "Activa")
+                                    @if (pItem.estado == "Activa")
                                     {
-                                        <span class="badge badge-primary">@p.estado</span>
+                                        <span class="badge badge-primary">@pItem.estado</span>
                                     }
-                                    else if (p.estado == "Inactiva")
+                                    else if (pItem.estado == "Inactiva")
                                     {
-                                        <span class="badge badge-secondary">@p.estado</span>
+                                        <span class="badge badge-secondary">@pItem.estado</span>
                                     }
                                     else
                                     {
-                                        <span class="badge badge-light">@p.estado</span>
+                                        <span class="badge badge-light">@pItem.estado</span>
                                     }
                                 </td>
 
                                 <td class="text-nowrap">
-                                    <a asp-page="Edit" asp-route-id="@p.pantalla_id"
+                                    <a asp-page="Edit" asp-route-id="@pItem.pantalla_id"
                                        class="btn btn-sm btn-primary" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </a>
 
-                                    <!-- Igual UX que Usuarios: confirmación por JS -->
                                     <button type="button" class="btn btn-sm btn-danger"
-                                            onclick="confirmarEliminacion('@p.pantalla_id', '@p.nombre')"
+                                            onclick="confirmarEliminacion('@pItem.pantalla_id', '@pItem.nombre')"
                                             title="Eliminar">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -112,10 +113,10 @@
         {
             <nav aria-label="Paginación">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item @(Model.page <= 1 ? "disabled" : "")">
+                    <li class="page-item @(Model.p <= 1 ? "disabled" : "")">
                         <a class="page-link"
                            asp-page="./Index"
-                           asp-route-page="@(Model.page - 1)"
+                           asp-route-p="@(Model.p - 1)"
                            asp-route-q="@Model.q">
                             Anterior
                         </a>
@@ -123,20 +124,20 @@
 
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {
-                        <li class="page-item @(i == Model.page ? "active" : "")">
+                        <li class="page-item @(i == Model.p ? "active" : "")">
                             <a class="page-link"
                                asp-page="./Index"
-                               asp-route-page="@i"
+                               asp-route-p="@i"
                                asp-route-q="@Model.q">
                                 @i
                             </a>
                         </li>
                     }
 
-                    <li class="page-item @(Model.page >= Model.TotalPages ? "disabled" : "")">
+                    <li class="page-item @(Model.p >= Model.TotalPages ? "disabled" : "")">
                         <a class="page-link"
                            asp-page="./Index"
-                           asp-route-page="@(Model.page + 1)"
+                           asp-route-p="@(Model.p + 1)"
                            asp-route-q="@Model.q">
                             Siguiente
                         </a>
@@ -151,7 +152,6 @@
     <script>
         $(document).ready(function () {
 
-            // Modal Éxito (igual que Usuarios)
             @if (!string.IsNullOrEmpty(Model.SuccessMessage))
             {
                     <text>
@@ -183,7 +183,6 @@
                     </text>
             }
 
-            // Modal Error (igual que Usuarios)
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
                     <text>
@@ -214,7 +213,6 @@
                     $('#modalMensaje').on('hidden.bs.modal', function () { $(this).remove(); });
                     </text>
             }
-
         });
 
         function confirmarEliminacion(idPantalla, nombrePantalla) {

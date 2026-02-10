@@ -34,7 +34,6 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 				return RedirectToPage();
 			}
 
-			TempData["Error"] = msg;
 
 			Estados = await _service.ListarAsync(UsuarioActual);
 

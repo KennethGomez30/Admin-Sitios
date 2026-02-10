@@ -34,3 +34,6 @@ C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Services\obj\
 C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\refint\Sistema_Contable.Services.dll
 C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\Sistema_Contable.Services.pdb
 C:\Users\Usuario\Desktop\Github Isma\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\ref\Sistema_Contable.Services.dll
+C:\Users\Jime\Documents\GitHub\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\Sistema_Contable.Services.dll
+C:\Users\Jime\Documents\GitHub\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\refint\Sistema_Contable.Services.dll
+C:\Users\Jime\Documents\GitHub\Admin-Sitios\Sistema_Contable.Services\obj\Debug\net8.0\Sistema_Contable.Services.pdb

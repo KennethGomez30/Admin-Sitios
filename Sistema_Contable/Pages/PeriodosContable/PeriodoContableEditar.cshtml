@@ -1,0 +1,55 @@
+﻿@page
+@model Sistema_Contable.Pages.PeriodosContable.PeriodoContableEditarModel
+@{
+    ViewData["Title"] = "Editar Período Contable";
+}
+
+<h1 class="h3 mb-4 text-gray-800">Editar Período Contable</h1>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+
+        <form method="post">
+            <input type="hidden" asp-for="PeriodoId" />
+
+            <div class="form-group">
+                <label>Año</label>
+                <select class="form-control" asp-for="Anio" asp-items="Model.Anios"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Mes</label>
+                <select class="form-control" asp-for="Mes" asp-items="Model.Meses"></select>
+            </div>
+
+            <div class="form-group">
+            <label>Usuario de cierre</label>
+                <input asp-for="UsuarioCierre"
+                       class="form-control"
+                       readonly="@(Model.EsCerrado ? false : true)" />
+             </div>
+
+            <div class="form-group">
+            <label>Fecha de cierre</label>
+                <input asp-for="FechaCierre"
+                       type="datetime-local"
+                       class="form-control"
+                       readonly="@(Model.EsCerrado ? false : true)" />
+            </div>
+
+@if (!Model.EsCerrado)
+{
+    <small class="form-text text-muted">
+        Estos campos solo se editan si el período está <strong>Cerrado</strong>.
+    </small>
+}
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar cambios
+            </button>
+
+            <a asp-page="./PeriodoContableAdmin" class="btn btn-secondary">Cancelar</a>
+        </form>
+
+    </div>
+</div>

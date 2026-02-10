@@ -1,0 +1,33 @@
+﻿@page
+@model Sistema_Contable.Pages.EstadosAsientos.EstadoAsientosEditarModel
+@{
+    ViewData["Title"] = "Editar Estado";
+}
+
+<h1 class="h3 mb-4 text-gray-800">Editar Estado</h1>
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="post">
+            <div class="form-group">
+                <label>Código</label>
+                <input class="form-control" asp-for="Estado.Codigo" readonly />
+            </div>
+
+            <div class="form-group">
+                <label>Nombre</label>
+                <input class="form-control" asp-for="Estado.Nombre" />
+            </div>
+
+            <div class="form-group">
+                <label>Descripción</label>
+                <input class="form-control" asp-for="Estado.Descripcion" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar cambios
+            </button>
+            <a asp-page="./EstadoAsientos" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>

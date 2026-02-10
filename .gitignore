@@ -496,3 +496,22 @@ obj/
 *.suo
 *.cache
 *.log
+
+
+# Build results
+bin/
+obj/
+
+# Visual Studio
+.vs/
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# Rider / VSCode
+.idea/
+.vscode/
+
+# Logs
+*.log

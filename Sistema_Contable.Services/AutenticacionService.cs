@@ -56,7 +56,7 @@ namespace Sistema_Contable.Services
                     return new ResultadoAutenticacion
                     {
                         Exitoso = false,
-                        Mensaje = "Usuario y/o contraseña incorrectos."
+                        Mensaje = "El usuario se encuentra bloqueado."
                     };
                 }
 
@@ -91,7 +91,7 @@ namespace Sistema_Contable.Services
                     return new ResultadoAutenticacion
                     {
                         Exitoso = false,
-                        Mensaje = "Usuario y/o contraseña incorrectos."
+                        Mensaje = "El usuario se encuentra inactivo."
                     };
                 }
 

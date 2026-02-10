@@ -1,0 +1,269 @@
+﻿@page "{id:long}"
+@model Sistema_Contable.Pages.Asientos.EditModel
+@{
+    ViewData["Title"] = "Editar Asiento";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        <i class="fas fa-book text-primary"></i> Editar Asiento
+    </h1>
+    <a asp-page="./Index" class="btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Atrás
+    </a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (!Model.PuedeEditar)
+{
+    <div class="alert alert-warning">
+        El asiento está en estado <strong>@Model.NombreEstado</strong> y no puede ser editado.
+    </div>
+}
+
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Asiento.AsientoId" />
+            <input type="hidden" id="eliminados" name="Eliminados" />
+
+            <!-- ENCABEZADO -->
+            <div class="row mb-3">
+                <div class="col-md-2">
+                    <label>Consecutivo</label>
+                    <input asp-for="Asiento.Consecutivo" class="form-control" readonly />
+                </div>
+
+                <div class="col-md-3">
+                    <label>Fecha</label>
+                    <input asp-for="Asiento.FechaAsiento" type="date"
+                           class="form-control"
+                           readonly="@(Model.PuedeEditar ? false : true)" />
+                </div>
+
+                <div class="col-md-3">
+                    <label>Código</label>
+                    <input asp-for="Asiento.Codigo"
+                           class="form-control"
+                           readonly="@(Model.PuedeEditar ? false : true)" />
+                </div>
+
+                <div class="col-md-4">
+                    <label>Referencia</label>
+                    <input asp-for="Asiento.Referencia"
+                           class="form-control"
+                           readonly="@(Model.PuedeEditar ? false : true)" />
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- DETALLE -->
+            <h6 class="font-weight-bold text-primary mb-2">
+                <i class="fas fa-list"></i> Detalle del Asiento
+            </h6>
+
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered table-sm align-middle" id="detalle-table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:30%;">Cuenta</th>
+                            <th style="width:15%;">Movimiento</th>
+                            <th style="width:15%;">Monto</th>
+                            <th>Descripción</th>
+                            <th style="width:90px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="detalle-body">
+                        @for (int i = 0; i < Model.Detalles.Count; i++)
+                        {
+                            var d = Model.Detalles[i];
+                            <tr class="detalle-row">
+                                <input type="hidden" name="Detalles[@i].DetalleId" value="@d.DetalleId" />
+
+                                <td>
+                                    <select name="Detalles[@i].CuentaId"
+                                            class="form-control form-control-sm"
+                                            @(Model.PuedeEditar ? "" : "disabled")>
+                                        <option value="">-- Seleccione --</option>
+                                        @foreach (var c in Model.Cuentas)
+                                        {
+                                            <option value="@c.Value" selected="@(c.Value == d.CuentaId.ToString())">
+                                                @c.Text
+                                            </option>
+                                        }
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <select name="Detalles[@i].TipoMovimiento"
+                                            class="form-control form-control-sm"
+                                            @(Model.PuedeEditar ? "" : "disabled")>
+                                        <option value="deudor" selected="@(d.TipoMovimiento == "deudor")">Deudor</option>
+                                        <option value="acreedor" selected="@(d.TipoMovimiento == "acreedor")">Acreedor</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <input name="Detalles[@i].Monto"
+                                           class="form-control form-control-sm monto-input"
+                                           value="@d.Monto.ToString("F2")"
+                                           @(Model.PuedeEditar ? "" : "readonly") />
+                                </td>
+
+                                <td>
+                                    <input name="Detalles[@i].Descripcion"
+                                           class="form-control form-control-sm"
+                                           value="@d.Descripcion"
+                                           @(Model.PuedeEditar ? "" : "readonly") />
+                                </td>
+
+                                <td class="text-center">
+                                    @if (Model.PuedeEditar)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-danger btn-remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.PuedeEditar)
+            {
+                <button type="button" id="btn-add-line" class="btn btn-sm btn-outline-secondary mb-3">
+                    <i class="fas fa-plus"></i> Agregar línea
+                </button>
+            }
+
+            <hr />
+
+            <!-- TOTALES -->
+            <div class="d-flex gap-4 align-items-center">
+                <div>Total Débito: <strong id="total-debito">@Model.TotalDebito.ToString("F2")</strong></div>
+                <div>Total Crédito: <strong id="total-credito">@Model.TotalCredito.ToString("F2")</strong></div>
+                <span id="balance-indicator"
+                      class="badge @(Model.Balanceado ? "bg-success" : "bg-danger")">
+                    @(Model.Balanceado ? "Balanceado" : "No balanceado")
+                </span>
+            </div>
+
+            <div class="mt-3">
+                @if (Model.PuedeEditar)
+                {
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar cambios
+                    </button>
+                }
+                <a asp-page="./Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- TEMPLATE OCULTO -->
+<table class="d-none">
+    <tbody>
+        <tr id="detalle-template">
+            <input type="hidden" name="Detalles[IDX].DetalleId" value="0" />
+
+            <td>
+                <select name="Detalles[IDX].CuentaId" class="form-control form-control-sm">
+                    <option value="">-- Seleccione --</option>
+                    @foreach (var c in Model.Cuentas)
+                    {
+                        <option value="@c.Value">@c.Text</option>
+                    }
+                </select>
+            </td>
+
+            <td>
+                <select name="Detalles[IDX].TipoMovimiento" class="form-control form-control-sm">
+                    <option value="deudor">Deudor</option>
+                    <option value="acreedor">Acreedor</option>
+                </select>
+            </td>
+
+            <td>
+                <input name="Detalles[IDX].Monto" class="form-control form-control-sm monto-input" />
+            </td>
+
+            <td>
+                <input name="Detalles[IDX].Descripcion" class="form-control form-control-sm" />
+            </td>
+
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger btn-remove">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        let index = document.querySelectorAll("#detalle-body tr").length;
+
+        document.getElementById("btn-add-line")?.addEventListener("click", () => {
+            const template = document.getElementById("detalle-template").outerHTML;
+            const html = template.replaceAll("IDX", index);
+            document.getElementById("detalle-body").insertAdjacentHTML("beforeend", html);
+            index++;
+            recalcularTotales();
+        });
+
+        document.addEventListener("click", e => {
+            if (e.target.closest(".btn-remove")) {
+                const row = e.target.closest("tr");
+                const hiddenId = row.querySelector("input[name*='DetalleId']");
+                if (hiddenId && hiddenId.value !== "0") {
+                    document.getElementById("eliminados").value += hiddenId.value + ",";
+                }
+                row.remove();
+                recalcularTotales();
+            }
+        });
+
+        document.addEventListener("input", e => {
+            if (e.target.classList.contains("monto-input")) {
+                recalcularTotales();
+            }
+        });
+
+        function recalcularTotales() {
+            let debito = 0, credito = 0;
+
+            document.querySelectorAll("#detalle-body tr").forEach(row => {
+                const monto = parseFloat(
+                    row.querySelector("input[name*='Monto']")?.value.replace(",", ".") || 0
+                );
+                const tipo = row.querySelector("select[name*='TipoMovimiento']")?.value;
+
+                if (tipo === "deudor") debito += monto;
+                if (tipo === "acreedor") credito += monto;
+            });
+
+            document.getElementById("total-debito").innerText = debito.toFixed(2);
+            document.getElementById("total-credito").innerText = credito.toFixed(2);
+
+            const badge = document.getElementById("balance-indicator");
+            if (debito === credito) {
+                badge.className = "badge bg-success";
+                badge.innerText = "Balanceado";
+            } else {
+                badge.className = "badge bg-danger";
+                badge.innerText = "No balanceado";
+            }
+        }
+    </script>
+}

@@ -37,6 +37,19 @@ builder.Services.AddScoped<IPantallaService, PantallaService>();
 builder.Services.AddScoped<Sistema_Contable.Repository.ICierreContableRepository, Sistema_Contable.Repository.CierreContableRepository>();
 builder.Services.AddScoped<Sistema_Contable.Services.ICierreContableService, Sistema_Contable.Services.CierreContableService>();
 
+
+//Asientos
+builder.Services.AddScoped<IAsientoRepository, AsientoRepository>();
+builder.Services.AddScoped<IAsientoService, AsientoService>();
+
+
+
+//Cuentas(Para selects en Create/Edit Asientos
+builder.Services.AddScoped<ICuentaRepository, CuentaRepository>();
+builder.Services.AddScoped<ICuentaService, CuentaService>();
+
+//Registrar el filtro de autenticación
+
 builder.Services.AddScoped<AutenticacionFilter>();
 
 

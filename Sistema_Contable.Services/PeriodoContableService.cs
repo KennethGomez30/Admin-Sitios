@@ -11,138 +11,190 @@ namespace Sistema_Contable.Services
 	public class PeriodoContableService : IPeriodoContableService
 	{
 		private readonly IPeriodoContableRepository _repo;
+		private readonly IBitacoraRepository _bitacoraRepo;
 
-		public PeriodoContableService(IPeriodoContableRepository repo)
+		public PeriodoContableService(IPeriodoContableRepository repo, IBitacoraRepository bitacoraRepo)
 		{
 			_repo = repo;
+			_bitacoraRepo = bitacoraRepo;
 		}
 
-		public Task<IEnumerable<PeriodosContables>> ListarAsync(string? estado)
-			=> _repo.ListarAsync(string.IsNullOrWhiteSpace(estado) ? null : estado.Trim());
+		public async Task<IEnumerable<PeriodosContables>> ListarAsync(string? estado, string usuario)
+		{
+			try
+			{
+				await LogAsync(usuario, "El usuario consulta Períodos Contables");
+				return await _repo.ListarAsync(string.IsNullOrWhiteSpace(estado) ? null : estado.Trim());
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO PeriodoContable.ListarAsync | {JsonError(ex)}");
+				throw;
+			}
+		}
 
-		public Task<PeriodosContables?> ObtenerAsync(int periodoId)
-			=> _repo.ObtenerAsync(periodoId);
+		public async Task<PeriodosContables?> ObtenerAsync(int periodoId, string usuario)
+		{
+			try
+			{
+				await LogAsync(usuario, "El usuario consulta Período Contable");
+				return await _repo.ObtenerAsync(periodoId);
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO PeriodoContable.ObtenerAsync | {JsonError(ex)}");
+				throw;
+			}
+		}
 
 		//Crear
-		public async Task<(bool Ok, string Mensaje)> CrearAsync(int anio, int mes)
+		public async Task<(bool Ok, string Mensaje)> CrearAsync(int anio, int mes, string usuario)
 		{
-			var v = ValidarAnioMes(anio, mes);
-			if (!v.Ok) return v;
-
-			// No permitir duplicados
-			if (await _repo.ObtenerPorAnioMesAsync(anio, mes) != null)
-				return (false, "Ya existe un período con ese año y mes.");
-
-
-			var nuevo = new PeriodosContables
+			try
 			{
-				Anio = anio,
-				Mes = mes,
-				Estado = "Abierto",
-				Activo = true
-			};
+				var v = ValidarAnioMes(anio, mes);
+				if (!v.Ok) return v;
 
-			var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
-			abiertos.Add(nuevo);
+				// No permitir duplicados
+				if (await _repo.ObtenerPorAnioMesAsync(anio, mes) != null)
+					return (false, "Ya existe un período con ese año y mes.");
 
-			if (!SonConsecutivos(abiertos))
-				return (false, "No se puede crear el período abierto");
 
-			var id = await _repo.InsertarAsync(nuevo);
-			nuevo.PeriodoId = id;
+				var nuevo = new PeriodosContables
+				{
+					Anio = anio,
+					Mes = mes,
+					Estado = "Abierto",
+					Activo = true
+				};
 
-			var abiertoReciente = abiertos
-	   .OrderByDescending(x => x.Anio)
-	   .ThenByDescending(x => x.Mes)
-	   .FirstOrDefault();
+				var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
+				abiertos.Add(nuevo);
 
-			if (abiertoReciente != null)
-			{
-				
-				if (abiertoReciente.PeriodoId == 0)
-					await _repo.MarcarActivoAsync(id);
-				else
-					await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
+				if (!SonConsecutivos(abiertos))
+					return (false, "No se puede crear el período abierto");
+
+				var id = await _repo.InsertarAsync(nuevo);
+				nuevo.PeriodoId = id;
+
+				var abiertoReciente = abiertos
+		   .OrderByDescending(x => x.Anio)
+		   .ThenByDescending(x => x.Mes)
+		   .FirstOrDefault();
+
+				if (abiertoReciente != null)
+				{
+
+					if (abiertoReciente.PeriodoId == 0)
+						await _repo.MarcarActivoAsync(id);
+					else
+						await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
+				}
+				await LogAsync(usuario, $"CREAR PeriodoContable | {Json(nuevo)}");
+				return (true, "Período creado correctamente.");
 			}
-
-			return (true, "Período creado correctamente.");
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO PeriodoContable.CrearAsync | {JsonError(ex)}");
+				throw;
+			}
 		}
-		
+
 
 		//Editar
 		public async Task<(bool Ok, string Mensaje)> EditarAsync(int periodoId, int anio, int mes, string? usuarioCierre, DateTime? fechaCierre)
 		{
-			var v = ValidarAnioMes(anio, mes);
-			if (!v.Ok) return v;
-
-			var actual = await _repo.ObtenerAsync(periodoId);
-			if (actual == null)
-				return (false, "El período no existe.");
-
-			var estado = (actual.Estado ?? "").Trim();
-
-
-			// Evitar duplicados por año/mes
-			var duplicado = await _repo.ObtenerPorAnioMesAsync(anio, mes);
-			if (duplicado != null && duplicado.PeriodoId != periodoId)
-				return (false, "Ya existe un período con ese año y mes.");
-
-			actual.Anio = anio;
-			actual.Mes = mes;
-			actual.Estado = estado;
-
-			if (estado.Equals("Cerrado", StringComparison.OrdinalIgnoreCase))
+			try
 			{
-				usuarioCierre = (usuarioCierre ?? "").Trim();
-				if (string.IsNullOrWhiteSpace(usuarioCierre))
-					return (false, "El usuario de cierre es requerido para períodos cerrados.");
+				var v = ValidarAnioMes(anio, mes);
+				if (!v.Ok) return v;
 
-				if (fechaCierre == null)
-					return (false, "La fecha de cierre es requerida para períodos cerrados.");
+				var actual = await _repo.ObtenerAsync(periodoId);
+				if (actual == null)
+					return (false, "El período no existe.");
 
-				actual.UsuarioCierre = usuarioCierre;
-				actual.FechaCierre = fechaCierre;
+				var estado = (actual.Estado ?? "").Trim();
+
+
+				// Evitar duplicados por año/mes
+				var duplicado = await _repo.ObtenerPorAnioMesAsync(anio, mes);
+				if (duplicado != null && duplicado.PeriodoId != periodoId)
+					return (false, "Ya existe un período con ese año y mes.");
+
+				actual.Anio = anio;
+				actual.Mes = mes;
+				actual.Estado = estado;
+
+				if (estado.Equals("Cerrado", StringComparison.OrdinalIgnoreCase))
+				{
+					usuarioCierre = (usuarioCierre ?? "").Trim();
+					if (string.IsNullOrWhiteSpace(usuarioCierre))
+						return (false, "El usuario de cierre es requerido para períodos cerrados.");
+
+					if (fechaCierre == null)
+						return (false, "La fecha de cierre es requerida para períodos cerrados.");
+
+					actual.UsuarioCierre = usuarioCierre;
+					actual.FechaCierre = fechaCierre;
+				}
+				else
+				{
+
+					actual.UsuarioCierre = null;
+					actual.FechaCierre = null;
+				}
+
+				await _repo.ActualizarAsync(actual);
+
+				// Validar consecutividad de abiertos (por si año/mes tocó la secuencia)
+				var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
+				if (!SonConsecutivos(abiertos))
+					return (false, "La modificación rompe la regla de períodos abiertos consecutivos.");
+				var realDespues = await _repo.ObtenerAsync(periodoId);
+				await LogAsync(usuarioCierre,
+				$"ACTUALIZAR PeriodoContable | {Json(new { Antes = actual, Despues = realDespues })}");
+				return (true, "Período actualizado correctamente.");
 			}
-			else
+			catch (Exception ex)
 			{
-				
-				actual.UsuarioCierre = null;
-				actual.FechaCierre = null;
+				await LogAsync(usuarioCierre, $"ERROR TECNICO PeriodoContable.EditarAsync | {JsonError(ex)}");
+				throw;
 			}
-
-			await _repo.ActualizarAsync(actual);
-
-			// Validar consecutividad de abiertos (por si año/mes tocó la secuencia)
-			var abiertos = (await _repo.ListarPeriodosAbiertosAscAsync()).ToList();
-			if (!SonConsecutivos(abiertos))
-				return (false, "La modificación rompe la regla de períodos abiertos consecutivos.");
-
-			return (true, "Período actualizado correctamente.");
 		}
 
 		//Eliminar
-		public async Task<(bool Ok, string Mensaje)> EliminarAsync(int periodoId)
+		public async Task<(bool Ok, string Mensaje)> EliminarAsync(int periodoId, string usuario)
 		{
-			var actual = await _repo.ObtenerAsync(periodoId);
-			if (actual == null)
-				return (false, "El período no existe.");
+			try
+			{
+				var actual = await _repo.ObtenerAsync(periodoId);
+				if (actual == null)
+					return (false, "El período no existe.");
 
-			if (await _repo.TieneRelacionAsync(periodoId))
-				return (false, "No se puede eliminar un registro con datos relacionados.");
+				if (await _repo.TieneRelacionAsync(periodoId))
+					return (false, "No se puede eliminar un registro con datos relacionados.");
 
-			await _repo.EliminarAsync(periodoId);
+				await _repo.EliminarAsync(periodoId);
 
-			
-			var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
-			if (abiertoReciente != null)
-				await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
 
-			return (true, "Período eliminado correctamente.");
+				var abiertoReciente = await _repo.ObtenerPeriodoAbiertoMasRecienteAsync();
+				if (abiertoReciente != null)
+					await _repo.MarcarActivoAsync(abiertoReciente.PeriodoId);
+				await LogAsync(usuario,
+			   $"ELIMINAR PeriodoContable | {Json(new { Eliminado = actual })}");
+				return (true, "Período eliminado correctamente.");
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO PeriodoContable.EliminarAsync | {JsonError(ex)}");
+				throw;
+			}
 		}
 
 		//Cerrar
 		public async Task<(bool Ok, string Mensaje)> CerrarAsync(int periodoId, string usuarioCierre)
 		{
+			
 			usuarioCierre = (usuarioCierre ?? "").Trim();
 			if (string.IsNullOrWhiteSpace(usuarioCierre))
 				return (false, "El usuario de cierre es requerido.");
@@ -175,7 +227,7 @@ namespace Sistema_Contable.Services
 		}
 
 		//Reabrir
-		public async Task<(bool Ok, string Mensaje)> ReabrirAsync(int periodoId)
+		public async Task<(bool Ok, string Mensaje)> ReabrirAsync(int periodoId, string usuario)
 		{
 			var target = await _repo.ObtenerAsync(periodoId);
 			if (target == null)
@@ -260,6 +312,25 @@ namespace Sistema_Contable.Services
 					return false;
 			}
 			return true;
+		}
+		private static string Json(object obj)
+		=> System.Text.Json.JsonSerializer.Serialize(obj);
+
+		private static string JsonError(Exception ex)
+			=> Json(new { Tipo = ex.GetType().Name, Mensaje = ex.Message, Stack = ex.StackTrace });
+
+		private async Task LogAsync(string usuario, string descripcion)
+		{
+			try
+			{
+				await _bitacoraRepo.RegistrarAsync(new Bitacora
+				{
+					FechaBitacora = DateTime.Now,
+					Usuario = usuario,
+					Descripcion = descripcion
+				});
+			}
+			catch { }
 		}
 	}
 }

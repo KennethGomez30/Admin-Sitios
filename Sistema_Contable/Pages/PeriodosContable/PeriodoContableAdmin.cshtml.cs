@@ -27,16 +27,16 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		public int PeriodoIdAccionModal { get; set; }
 		public string? AccionModal { get; set; }
 		public string? PeriodoTextoAccionModal { get; set; }
-
+		private string UsuarioActual => HttpContext.Session.GetString("UsuarioNombre") ?? HttpContext.Session.GetString("UsuarioId") ?? "Sistema";
 		public async Task OnGetAsync()
 		{
 			var filtro = string.IsNullOrWhiteSpace(Estado) ? null : Estado.Trim();
-			Periodos = await _service.ListarAsync(filtro);
+			Periodos = await _service.ListarAsync(filtro, UsuarioActual);
 		}
 		public async Task<IActionResult> OnPostEliminarAsync(int idEliminar, string? estado)
 		{
 			Estado = estado;
-			var (ok, msg) = await _service.EliminarAsync(idEliminar);
+			var (ok, msg) = await _service.EliminarAsync(idEliminar, UsuarioActual);
 
 			if (ok)
 			{
@@ -48,7 +48,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 			TempData["Error"] = msg;
 
 
-			Periodos = await _service.ListarAsync(Estado);
+			Periodos = await _service.ListarAsync(Estado, UsuarioActual);
 
 			MostrarModalEliminar = true;
 			MensajeModalEliminar = msg;
@@ -74,7 +74,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 			if (accion == "Cerrar")
 				res = await _service.CerrarAsync(periodoId, usuarioCierre);
 			else
-				res = await _service.ReabrirAsync(periodoId);
+				res = await _service.ReabrirAsync(periodoId, UsuarioActual);
 
 			TempData[res.ok ? "Success" : "Error"] = res.msg;
 			return RedirectToPage(new { Estado = Estado });

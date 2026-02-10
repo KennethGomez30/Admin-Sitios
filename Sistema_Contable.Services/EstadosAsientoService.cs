@@ -12,6 +12,7 @@ namespace Sistema_Contable.Services
 	public class EstadoAsientoService : IEstadosAsientoService
 	{
 		private readonly IEstadosAsientoRepository _repo;
+		private readonly IBitacoraRepository _bitacoraRepo;
 
 		// Nombre: solo letras y espacios
 		private static readonly Regex RxNombre =
@@ -21,59 +22,117 @@ namespace Sistema_Contable.Services
 		private static readonly Regex RxDescripcion =
 			new(@"^[A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ\s]+$", RegexOptions.Compiled);
 
-		public EstadoAsientoService(IEstadosAsientoRepository repo)
+		public EstadoAsientoService(IEstadosAsientoRepository repo, IBitacoraRepository bitacoraRepo)
 		{
 			_repo = repo;
+			_bitacoraRepo = bitacoraRepo;
 		}
 
-		public Task<IEnumerable<EstadosAsiento>> ListarAsync()
-			=> _repo.ListarAsync();
-
-		public Task<EstadosAsiento?> ObtenerAsync(string codigo)
-			=> _repo.ObtenerPorCodigoAsync((codigo ?? "").Trim());
-
-		public async Task<(bool Ok, string Mensaje)> CrearAsync(EstadosAsiento estado)
+		public async Task<IEnumerable<EstadosAsiento>> ListarAsync(string usuario)
 		{
-			var v = Validar(estado);
-			if (!v.Ok) return v;
-
-			estado.Codigo = estado.Codigo.Trim();
-
-			Normalizar(estado);
-
-			await _repo.InsertarAsync(estado);
-			return (true, "Estado creado correctamente.");
+			try
+			{
+				await LogAsync(usuario, "El usuario consulta Estados de Asiento");
+				return await _repo.ListarAsync();
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO EstadosAsiento.ListarAsync | {JsonError(ex)}");
+				throw;
+			}
 		}
 
-		public async Task<(bool Ok, string Mensaje)> EditarAsync(EstadosAsiento estado)
+		public async Task<EstadosAsiento?> ObtenerAsync(string codigo, string usuario)
 		{
-			var v = Validar(estado);
-			if (!v.Ok) return v;
-
-			estado.Codigo = estado.Codigo.Trim();
-
-			var actual = await _repo.ObtenerPorCodigoAsync(estado.Codigo);
-			if (actual == null)
-				return (false, "El estado no existe.");
-
-			Normalizar(estado);
-
-			await _repo.ActualizarAsync(estado);
-			return (true, "Estado actualizado correctamente.");
+			try
+			{
+				await LogAsync(usuario, $"El usuario consulta Estado de Asiento");
+				return await _repo.ObtenerPorCodigoAsync(codigo);
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO EstadosAsiento.ObtenerAsync | {JsonError(ex)}");
+				throw;
+			}
 		}
 
-		public async Task<(bool Ok, string Mensaje)> EliminarAsync(string codigo)
+		public async Task<(bool Ok, string Mensaje)> CrearAsync(EstadosAsiento estado, string usuario)
 		{
-			codigo = (codigo ?? "").Trim();
-			if (string.IsNullOrWhiteSpace(codigo))
-				return (false, "El código es requerido.");
+			try
+			{
+				var v = Validar(estado);
+				if (!v.Ok) return v;
 
-			var actual = await _repo.ObtenerPorCodigoAsync(codigo);
-			if (actual == null)
-				return (false, "El estado no existe.");
+				estado.Codigo = estado.Codigo.Trim();
 
-			await _repo.EliminarAsync(codigo);
-			return (true, "Estado eliminado correctamente.");
+				Normalizar(estado);
+
+				await _repo.InsertarAsync(estado);
+				
+				await LogAsync(usuario, $"CREAR EstadosAsiento | {Json(estado)}");
+				return (true, "Estado creado correctamente.");
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO EstadosAsiento.CrearAsync | {JsonError(ex)}");
+				return (false, "Ocurrió un error al crear el estado.");
+			}
+		}
+
+		public async Task<(bool Ok, string Mensaje)> EditarAsync(EstadosAsiento estado, string usuario)
+		{
+			try
+			{
+				var v = Validar(estado);
+				if (!v.Ok) return v;
+				var antes = await _repo.ObtenerPorCodigoAsync(estado.Codigo);
+				if (antes == null) return (false, "El estado no existe.");
+
+				estado.Codigo = estado.Codigo.Trim();
+
+				var actual = await _repo.ObtenerPorCodigoAsync(estado.Codigo);
+				if (actual == null)
+					return (false, "El estado no existe.");
+
+				Normalizar(estado);
+
+				await _repo.ActualizarAsync(estado);
+				var despues = await _repo.ObtenerPorCodigoAsync(estado.Codigo);
+
+				await LogAsync(usuario,
+					$"ACTUALIZAR EstadosAsiento | {Json(new { Antes = antes, Despues = despues })}");
+				return (true, "Estado actualizado correctamente.");
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO EstadosAsiento.EditarAsync | {JsonError(ex)}");
+				return (false, "Ocurrió un error al actualizar el estado.");
+			}
+		}
+
+		public async Task<(bool Ok, string Mensaje)> EliminarAsync(string codigo, string usuario)
+		{
+			try
+			{
+				var eliminado = await _repo.ObtenerPorCodigoAsync(codigo);
+				codigo = (codigo ?? "").Trim();
+				if (string.IsNullOrWhiteSpace(codigo))
+					return (false, "El código es requerido.");
+
+				var actual = await _repo.ObtenerPorCodigoAsync(codigo);
+				if (actual == null)
+					return (false, "El estado no existe.");
+
+				await _repo.EliminarAsync(codigo);
+				await LogAsync(usuario,
+				$"ELIMINAR EstadosAsiento | {Json(new { Eliminado = eliminado })}");
+				return (true, "Estado eliminado correctamente.");
+			}
+			catch (Exception ex)
+			{
+				await LogAsync(usuario, $"ERROR TECNICO EstadosAsiento.EliminarAsync | {JsonError(ex)}");
+				return (false, "Ocurrió un error al eliminar el estado.");
+			}
 		}
 
 		private static (bool Ok, string Mensaje) Validar(EstadosAsiento e)
@@ -110,6 +169,31 @@ namespace Sistema_Contable.Services
 		{
 			e.Nombre = Regex.Replace(e.Nombre, @"\s+", " ").Trim();
 			e.Descripcion = Regex.Replace(e.Descripcion, @"\s+", " ").Trim();
+		}
+
+		private static string Json(object obj)
+		=> System.Text.Json.JsonSerializer.Serialize(obj);
+
+		private static string JsonError(Exception ex)
+			=> Json(new
+			{
+				Tipo = ex.GetType().Name,
+				Mensaje = ex.Message,
+				Stack = ex.StackTrace?.Length > 1200 ? ex.StackTrace.Substring(0, 1200) : ex.StackTrace
+			});
+
+		private async Task LogAsync(string usuario, string descripcion)
+		{
+			try
+			{
+				await _bitacoraRepo.RegistrarAsync(new Bitacora
+				{
+					FechaBitacora = DateTime.Now,
+					Usuario = usuario,
+					Descripcion = descripcion
+				});
+			}
+			catch { }
 		}
 	}
 }

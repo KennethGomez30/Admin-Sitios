@@ -14,7 +14,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 		public string? MensajeModal { get; set; }
 		public string? CodigoModal { get; set; }
 		public string? NombreModal { get; set; }
-
+		private string UsuarioActual =>HttpContext.Session.GetString("UsuarioNombre")?? HttpContext.Session.GetString("UsuarioId")?? "Sistema";
 		public EstadoAsientoModel(IEstadosAsientoService service)
 		{
 			_service = service;
@@ -22,11 +22,11 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		public async Task OnGetAsync()
 		{
-			Estados = await _service.ListarAsync();
+			Estados = await _service.ListarAsync(UsuarioActual);
 		}
 		public async Task<IActionResult> OnPostEliminarAsync(string codigo)
 		{
-			var (ok, msg) = await _service.EliminarAsync(codigo);
+			var (ok, msg) = await _service.EliminarAsync(codigo, UsuarioActual);
 
 			if (ok)
 			{
@@ -36,7 +36,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 			TempData["Error"] = msg;
 
-			Estados = await _service.ListarAsync();
+			Estados = await _service.ListarAsync(UsuarioActual);
 
 			MostrarModal = true;
 			MensajeModal = msg;

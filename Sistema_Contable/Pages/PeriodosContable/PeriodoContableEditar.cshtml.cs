@@ -21,6 +21,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		public List<SelectListItem> Anios { get; private set; } = new();
 		public List<SelectListItem> Meses { get; private set; } = new();
 		public bool EsCerrado { get; set; }
+		private string UsuarioActual => HttpContext.Session.GetString("UsuarioNombre") ?? HttpContext.Session.GetString("UsuarioId") ?? "Sistema";
 		public PeriodoContableEditarModel(IPeriodoContableService service)
 		{
 			_service = service;
@@ -28,7 +29,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 
 		public async Task<IActionResult> OnGetAsync(int id)
 		{
-			Periodo = await _service.ObtenerAsync(id);
+			Periodo = await _service.ObtenerAsync(id, UsuarioActual);
 			if (Periodo == null)
 			{
 				TempData["Error"] = "El período no existe.";

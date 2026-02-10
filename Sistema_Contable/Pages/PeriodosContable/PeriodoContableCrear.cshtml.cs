@@ -14,7 +14,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 
 		public List<SelectListItem> Anios { get; private set; } = new();
 		public List<SelectListItem> Meses { get; private set; } = new();
-
+		private string UsuarioActual => HttpContext.Session.GetString("UsuarioNombre") ?? HttpContext.Session.GetString("UsuarioId") ?? "Sistema";
 		public PeriodosContableCrearModel(IPeriodoContableService service)
 		{
 			_service = service;
@@ -29,7 +29,7 @@ namespace Sistema_Contable.Pages.PeriodosContable
 		{
 			CargarCombos();
 
-			var (ok, msg) = await _service.CrearAsync(Anio, Mes);
+			var (ok, msg) = await _service.CrearAsync(Anio, Mes, UsuarioActual);
 			TempData[ok ? "Success" : "Error"] = msg;
 
 			if (!ok) return Page();

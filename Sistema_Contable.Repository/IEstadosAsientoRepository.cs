@@ -16,5 +16,6 @@ namespace Sistema_Contable.Repository
 		Task ActualizarAsync(EstadosAsiento estado);
 
 		Task EliminarAsync(string codigo);
+		
 	}
 }

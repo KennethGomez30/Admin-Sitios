@@ -9,11 +9,11 @@ namespace Sistema_Contable.Services
 {
 	public interface IEstadosAsientoService
 	{
-		Task<IEnumerable<EstadosAsiento>> ListarAsync();
-		Task<EstadosAsiento?> ObtenerAsync(string codigo);
+		Task<IEnumerable<EstadosAsiento>> ListarAsync(string usuario);
+		Task<EstadosAsiento?> ObtenerAsync(string codigo, string usuario);
 
-		Task<(bool Ok, string Mensaje)> CrearAsync(EstadosAsiento estado);
-		Task<(bool Ok, string Mensaje)> EditarAsync(EstadosAsiento estado);
-		Task<(bool Ok, string Mensaje)> EliminarAsync(string codigo);
+		Task<(bool Ok, string Mensaje)> CrearAsync(EstadosAsiento estado, string usuario);
+		Task<(bool Ok, string Mensaje)> EditarAsync(EstadosAsiento estado, string usuario);
+		Task<(bool Ok, string Mensaje)> EliminarAsync(string codigo, string usuario);
 	}
 }

@@ -11,7 +11,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		[BindProperty]
 		public EstadosAsiento Estado { get; set; } = new();
-
+		private string UsuarioActual => HttpContext.Session.GetString("UsuarioNombre") ?? HttpContext.Session.GetString("UsuarioId") ?? "Sistema";
 		public EstadoAsientosCrearModel(IEstadosAsientoService service)
 		{
 			_service = service;
@@ -21,7 +21,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		public async Task<IActionResult> OnPostAsync()
 		{
-			var (ok, msg) = await _service.CrearAsync(Estado);
+			var (ok, msg) = await _service.CrearAsync(Estado, UsuarioActual);
 
 			if (!ok)
 			{

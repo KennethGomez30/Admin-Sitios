@@ -11,7 +11,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		[BindProperty]
 		public EstadosAsiento Estado { get; set; } = new();
-
+		private string UsuarioActual => HttpContext.Session.GetString("UsuarioNombre") ?? HttpContext.Session.GetString("UsuarioId") ?? "Sistema";
 		public EstadoAsientosEditarModel(IEstadosAsientoService service)
 		{
 			_service = service;
@@ -19,7 +19,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		public async Task<IActionResult> OnGetAsync(string codigo)
 		{
-			var data = await _service.ObtenerAsync(codigo);
+			var data = await _service.ObtenerAsync(codigo, UsuarioActual);
 
 			if (data == null)
 			{
@@ -33,7 +33,7 @@ namespace Sistema_Contable.Pages.EstadosAsientos
 
 		public async Task<IActionResult> OnPostAsync()
 		{
-			var (ok, msg) = await _service.EditarAsync(Estado);
+			var (ok, msg) = await _service.EditarAsync(Estado, UsuarioActual);
 
 			if (!ok)
 			{

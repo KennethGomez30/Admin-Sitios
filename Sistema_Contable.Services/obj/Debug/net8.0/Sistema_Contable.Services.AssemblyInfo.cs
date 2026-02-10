@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sistema_Contable.Services")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1258c616a8487fe33cda5a04a5900a441aac9cea")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04a06d873417c599c408e8fa5a183652895fd5cc")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sistema_Contable.Services")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sistema_Contable.Services")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
